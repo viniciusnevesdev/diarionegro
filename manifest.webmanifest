@@ -1,0 +1,8 @@
+{
+  "name": "Diário Negro",
+  "short_name": "Diário Negro",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#f7f6f2"
+}

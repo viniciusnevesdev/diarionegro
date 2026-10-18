@@ -1,0 +1,21 @@
+DIÁRIO NEGRO — PWA v0.2 + SUPABASE
+
+Esta versão já:
+- conecta ao seu projeto Supabase;
+- pede login apenas quando não existe sessão salva;
+- mantém a sessão persistida no Safari/PWA;
+- lê os registros reais da tabela public.registros;
+- permite criar um registro de texto pelo botão Registrar;
+- usa somente Project URL + Publishable key no frontend.
+
+TESTE
+1. Inicie com: sh iniciar.sh
+2. Abra: http://127.0.0.1:8080
+3. Faça login com o usuário que você criou no Supabase.
+4. Toque em Registrar, escreva algo e Salvar.
+5. O registro deve aparecer em “Últimas anotações”.
+
+IMPORTANTE
+- Não coloque service_role, secret key ou senha do banco nos arquivos.
+- A Publishable key é própria para uso no frontend.
+- O envio pelo Atalho ao Supabase será a próxima etapa; por enquanto o Atalho continua com o arquivo local.
