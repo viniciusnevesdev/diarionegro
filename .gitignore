@@ -1,0 +1,11 @@
+# Backups locais
+backup-*/
+*.backup-*
+
+# Relatórios e diagnósticos
+RELATORIO_*
+DIAGNOSTICO_*
+
+# Checkpoints e setups locais
+CHECKPOINT_*
+SETUP_*
