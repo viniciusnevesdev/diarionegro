@@ -109,6 +109,7 @@
   let habits = [];
   let habitFailures = new Map();
   let tasks = [];
+  let taskHistoryIds = new Set();
   let selectedHabitId = null;
   let selectedTaskId = null;
 
@@ -253,6 +254,56 @@
     if (error) throw error;
     return row;
   }
+
+  // DN_FEATURES_V072_AI_TASK_SYNC
+  window.DN_APP_API = window.DN_APP_API || {};
+
+  window.DN_APP_API.createTaskFromAI = async ({ sourceRecordId, title } = {}) => {
+    if (!session) throw new Error('Sessão não disponível.');
+
+    const sourceId = String(sourceRecordId || '').trim();
+    const cleanTitle = String(title || '').trim();
+
+    if (!cleanTitle) {
+      throw new Error('A IA não forneceu texto suficiente para criar a tarefa.');
+    }
+
+    const safeSource = sourceId
+      .replace(/[^a-zA-Z0-9_-]/g, '')
+      .slice(-90);
+
+    const id = safeSource
+      ? `tk-ai-${safeSource}`
+      : generateRecordId(new Date()).replace('dn-', 'tk-ai-');
+
+    if (taskHistoryIds.has(id)) {
+      const existing = tasks.find((item) => item.id === id) || null;
+
+      return {
+        created: false,
+        exists: Boolean(existing),
+        deleted: !existing,
+        task: existing
+      };
+    }
+
+    await insertStructuredEvent('tarefa_criada', {
+      task_id: id,
+      title: cleanTitle,
+      created_at: new Date().toISOString(),
+      source: 'ia',
+      source_record_id: sourceId || null
+    });
+
+    await loadAppState();
+
+    return {
+      created: true,
+      exists: true,
+      deleted: false,
+      task: tasks.find((item) => item.id === id) || null
+    };
+  };
 
   // ---------- LINHA DO TEMPO ----------
 
@@ -565,6 +616,7 @@
 
     habits = [...habitMap.values()].filter((item) => !item.deleted)
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    taskHistoryIds = new Set(taskMap.keys());
     tasks = [...taskMap.values()].filter((item) => !item.deleted)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     habitFailures = failureMap;

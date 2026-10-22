@@ -79,6 +79,34 @@
     return (card.querySelector('p')?.textContent || '').trim();
   }
 
+  async function syncTaskIfNeeded(data, id, text, status) {
+    if (data?.tipo !== 'tarefa') return;
+
+    const createTask = window.DN_APP_API?.createTaskFromAI;
+
+    if (typeof createTask !== 'function') {
+      status.textContent =
+        'Interpretação concluída, mas a lista de tarefas não está disponível.';
+      return;
+    }
+
+    const outcome = await createTask({
+      sourceRecordId: id || null,
+      title: String(data.resumo || text || '').trim()
+    });
+
+    if (outcome?.created) {
+      status.textContent =
+        'Interpretação concluída. Tarefa adicionada à lista.';
+    } else if (outcome?.deleted) {
+      status.textContent =
+        'Interpretação concluída. Esta tarefa já foi excluída anteriormente.';
+    } else {
+      status.textContent =
+        'Interpretação concluída. Tarefa já estava na lista.';
+    }
+  }
+
   function ensureCardUi(card) {
     if (!card || card.querySelector('.dn-ai-wrap')) return;
 
@@ -119,6 +147,15 @@
       result.innerHTML = resultHtml(cached);
       button.textContent = 'Interpretar novamente';
       button.dataset.force = '1';
+      status.textContent = 'Interpretação carregada.';
+
+      try {
+        await syncTaskIfNeeded(cached, id, text, status);
+      } catch (taskError) {
+        status.textContent =
+          `Interpretação carregada, mas não consegui adicionar a tarefa: ${taskError?.message || String(taskError)}`;
+      }
+
       return;
     }
 
@@ -154,6 +191,14 @@
       writeCache(id, response.data);
       result.innerHTML = resultHtml(response.data);
       status.textContent = 'Interpretação concluída.';
+
+      try {
+        await syncTaskIfNeeded(response.data, id, text, status);
+      } catch (taskError) {
+        status.textContent =
+          `Interpretação concluída, mas não consegui adicionar a tarefa: ${taskError?.message || String(taskError)}`;
+      }
+
       button.textContent = 'Interpretar novamente';
       button.dataset.force = '1';
     } catch (error) {
