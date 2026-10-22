@@ -13,11 +13,13 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- DN_FEATURES_V05 -->
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
   <div class="ambient ambient-c"></div>
 
   <main class="app-shell" aria-label="Diário Negro">
+    <div id="homeView" class="page-view">
     <header class="topbar">
       <div class="brand-wrap">
         <h1 class="brand">Diário<br><span>Negro</span></h1>
@@ -52,45 +54,13 @@
       </button>
     </section>
 
-    <section class="section-block">
+    <section class="section-block habits-section">
       <div class="section-heading">
-        <h2>Em andamento</h2>
-        <button type="button" class="text-btn">Ver todos <span>→</span></button>
+        <h2>Hábitos & metas</h2>
+        <button type="button" class="text-btn" id="openHabitsManager">Ver todos <span>→</span></button>
       </div>
 
-      <div class="stats-grid">
-        <article class="stat-card stat-cyan">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4M6 8v8M9 10v4M15 10v4M18 8v8M21 10v4M9 12h6"/></svg>
-          </div>
-          <div class="stat-value">12</div>
-          <div class="stat-label">dias<br>exercício</div>
-        </article>
-
-        <article class="stat-card stat-warm">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l-1 7a4 4 0 0 1-3 3.5V21M8 3l1 7a4 4 0 0 0 3 3.5M8 21h8M5 5l14 14"/></svg>
-          </div>
-          <div class="stat-value">40</div>
-          <div class="stat-label">dias<br>sem álcool</div>
-        </article>
-
-        <article class="stat-card stat-violet">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.3A8.2 8.2 0 1 1 8.7 4a6.4 6.4 0 0 0 11.3 11.3Z"/></svg>
-          </div>
-          <div class="stat-value">7</div>
-          <div class="stat-label">noites<br>bem dormidas</div>
-        </article>
-
-        <article class="stat-card stat-green">
-          <div class="stat-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4C11 4 5 8 5 15c0 2 1 4 3 5 0-5 4-9 10-12-4 3-7 6-8 10 7 0 10-6 10-14Z"/></svg>
-          </div>
-          <div class="stat-value">28</div>
-          <div class="stat-label">dias<br>meditando</div>
-        </article>
-      </div>
+      <div class="habit-grid" id="habitGrid" aria-live="polite"></div>
     </section>
 
     <section class="assistant-card glass-card">
@@ -99,59 +69,23 @@
           <div class="spark" aria-hidden="true">✦</div>
           <div>
             <h2>Assistente inicial</h2>
-            <p>O que vale fazer hoje.</p>
+            <p>Suas tarefas de agora.</p>
           </div>
         </div>
-        <button type="button" class="text-btn">Ver todos <span>→</span></button>
+        <button type="button" class="text-btn" id="openTasksManager">Ver todas <span>→</span></button>
       </div>
 
-      <div class="task-list">
-        <button class="task-row done" type="button">
-          <span class="task-icon task-green">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4M6 8v8M9 10v4M15 10v4M18 8v8M21 10v4M9 12h6"/></svg>
-          </span>
-          <span class="task-name">Caminhada</span>
-          <span class="task-time">07:12</span>
-          <span class="checkmark">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-9"/></svg>
-          </span>
-        </button>
-
-        <button class="task-row done" type="button">
-          <span class="task-icon task-pink">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5a4 4 0 0 1 5.7 0l6.3 6.3a4 4 0 0 1 0 5.7l-5 5a4 4 0 0 1-5.7 0l-6.3-6.3a4 4 0 0 1 0-5.7Z"/><path d="m7 17 10-10"/></svg>
-          </span>
-          <span class="task-name">Remédio</span>
-          <span class="task-time">09:03</span>
-          <span class="checkmark">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-9"/></svg>
-          </span>
-        </button>
-
-        <button class="task-row note" type="button" data-demo="note">
-          <span class="task-icon task-blue">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
-          </span>
-          <span class="task-name">Anotação<small>Escreva uma nota antes de concluir</small></span>
-          <span class="task-time">11:20</span>
-          <span class="chevron">›</span>
-        </button>
-
-        <button class="task-row" type="button">
-          <span class="task-icon task-violet">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.3A8.2 8.2 0 1 1 8.7 4a6.4 6.4 0 0 0 11.3 11.3Z"/></svg>
-          </span>
-          <span class="task-name">Sono</span>
-          <span class="task-time">—</span>
-          <span class="empty-check"></span>
-        </button>
-      </div>
+      <div class="task-list" id="taskList" aria-live="polite"></div>
+      <button class="add-row-btn" type="button" id="addTaskButton">
+        <span class="add-row-icon">+</span>
+        <span>Adicionar tarefa</span>
+      </button>
     </section>
 
     <section class="section-block notes-section">
       <div class="section-heading">
         <h2>Últimas anotações</h2>
-        <button type="button" class="text-btn">Ver todas <span>→</span></button>
+        <button type="button" class="text-btn" id="openTimelineFromNotes">Ver todas <span>→</span></button>
       </div>
 
       <div class="notes-row" id="realNotes">
@@ -162,12 +96,38 @@
       </div>
     </section>
 
+    </div>
+
+    <section id="timelineView" class="page-view timeline-view" hidden aria-label="Linha do tempo">
+      <header class="timeline-header">
+        <div>
+          <div class="eyebrow">SEU HISTÓRICO</div>
+          <h1>Linha do tempo</h1>
+          <p>Mais antigos acima. O presente fica no fim.</p>
+        </div>
+
+        <button class="icon-btn glass" id="timelineRefresh" aria-label="Atualizar histórico" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 6v5h-5"/>
+            <path d="M19 11a7 7 0 1 0 1 5"/>
+          </svg>
+        </button>
+      </header>
+
+      <div id="timelineStatus" class="timeline-status">Carregando registros…</div>
+      <div id="timelineLoader" class="timeline-loader" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Carregando anteriores…</span>
+      </div>
+      <div id="timelineList" class="timeline-list"></div>
+    </section>
+
     <nav class="bottom-dock glass-card" aria-label="Navegação principal">
-      <button class="dock-item active" type="button">
+      <button class="dock-item active" id="homeNavButton" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 11 8-7 8 7v9H5v-9Z"/></svg>
         <span>Início</span>
       </button>
-      <button class="dock-item" type="button">
+      <button class="dock-item" id="timelineNavButton" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h13M7 12h13M7 18h13"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
         <span>Linha do tempo</span>
       </button>
@@ -219,6 +179,137 @@
     </form>
   </dialog>
 
+
+  <dialog id="habitFormDialog" class="demo-dialog">
+    <form id="habitForm" class="demo-sheet form-sheet">
+      <div class="sheet-handle"></div>
+      <h2 id="habitFormTitle">Novo hábito</h2>
+      <input id="habitId" type="hidden" />
+
+      <label class="field-label" for="habitTitle">Título</label>
+      <input id="habitTitle" class="field-input" type="text" placeholder="Ex.: Sem beber" maxlength="60" required />
+
+      <div class="form-grid two-cols">
+        <label>
+          <span class="field-label">Tipo</span>
+          <select id="habitMode" class="field-input">
+            <option value="maintain">Estou mantendo</option>
+            <option value="avoid">Estou evitando</option>
+          </select>
+        </label>
+        <label>
+          <span class="field-label">Mostrar em</span>
+          <select id="habitUnit" class="field-input">
+            <option value="auto">Automático</option>
+            <option value="minutes">Minutos</option>
+            <option value="hours">Horas</option>
+            <option value="days">Dias</option>
+            <option value="months">Meses</option>
+            <option value="years">Anos</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="field-label" for="habitStartedAt">Começou em</label>
+      <input id="habitStartedAt" class="field-input" type="datetime-local" required />
+
+      <div class="form-grid two-cols">
+        <label>
+          <span class="field-label">Tamanho</span>
+          <select id="habitSize" class="field-input">
+            <option value="small">Pequeno</option>
+            <option value="medium" selected>Médio</option>
+            <option value="large">Grande</option>
+            <option value="giant">Gigante</option>
+          </select>
+        </label>
+        <label>
+          <span class="field-label">Cor</span>
+          <select id="habitColor" class="field-input">
+            <option value="cyan">Ciano</option>
+            <option value="warm">Coral</option>
+            <option value="violet">Violeta</option>
+            <option value="green">Verde</option>
+            <option value="blue">Azul</option>
+            <option value="pink">Rosa</option>
+          </select>
+        </label>
+      </div>
+
+      <p id="habitFormError" class="form-error" hidden></p>
+      <div class="sheet-actions">
+        <button type="button" class="secondary-btn" id="cancelHabitForm">Cancelar</button>
+        <button type="submit" class="primary-btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="habitDetailDialog" class="demo-dialog">
+    <div class="demo-sheet detail-sheet">
+      <div class="sheet-handle"></div>
+      <div id="habitDetailContent"></div>
+      <div class="sheet-actions stacked-actions">
+        <button type="button" class="secondary-btn" id="editHabitButton">Editar</button>
+        <button type="button" class="danger-btn" id="failHabitButton">☹ Falhei desta vez</button>
+        <button type="button" class="ghost-danger-btn" id="deleteHabitButton">Excluir hábito</button>
+        <button type="button" class="primary-btn" id="closeHabitDetail">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="habitsManagerDialog" class="demo-dialog">
+    <div class="demo-sheet manager-sheet">
+      <div class="sheet-handle"></div>
+      <div class="manager-heading">
+        <div><h2>Hábitos & metas</h2><p class="sheet-copy">Toque em um cartão para editar ou ver detalhes.</p></div>
+        <button type="button" class="mini-add-btn" id="addHabitFromManager">+ Adicionar</button>
+      </div>
+      <div id="habitsManagerList" class="manager-list"></div>
+      <button type="button" class="primary-btn sheet-button" id="closeHabitsManager">Fechar</button>
+    </div>
+  </dialog>
+
+  <dialog id="taskFormDialog" class="demo-dialog">
+    <form id="taskForm" class="demo-sheet form-sheet">
+      <div class="sheet-handle"></div>
+      <h2 id="taskFormTitle">Nova tarefa</h2>
+      <input id="taskId" type="hidden" />
+      <label class="field-label" for="taskTitle">Tarefa</label>
+      <input id="taskTitle" class="field-input" type="text" placeholder="Ex.: Ir ao mercado" maxlength="90" required />
+      <p id="taskFormError" class="form-error" hidden></p>
+      <div class="sheet-actions">
+        <button type="button" class="secondary-btn" id="cancelTaskForm">Cancelar</button>
+        <button type="submit" class="primary-btn">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="taskDetailDialog" class="demo-dialog">
+    <div class="demo-sheet detail-sheet">
+      <div class="sheet-handle"></div>
+      <div id="taskDetailContent"></div>
+      <div class="sheet-actions stacked-actions">
+        <button type="button" class="secondary-btn" id="editTaskButton">Editar</button>
+        <button type="button" class="success-btn" id="startTaskButton">Iniciar tarefa</button>
+        <button type="button" class="primary-btn" id="completeTaskButton">Concluir tarefa</button>
+        <button type="button" class="ghost-danger-btn" id="deleteTaskButton">Excluir tarefa</button>
+        <button type="button" class="secondary-btn" id="closeTaskDetail">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="tasksManagerDialog" class="demo-dialog">
+    <div class="demo-sheet manager-sheet">
+      <div class="sheet-handle"></div>
+      <div class="manager-heading">
+        <div><h2>Tarefas</h2><p class="sheet-copy">Abertas, em andamento e concluídas.</p></div>
+        <button type="button" class="mini-add-btn" id="addTaskFromManager">+ Adicionar</button>
+      </div>
+      <div id="tasksManagerList" class="manager-list"></div>
+      <button type="button" class="primary-btn sheet-button" id="closeTasksManager">Fechar</button>
+    </div>
+  </dialog>
+
   <dialog id="accountDialog" class="demo-dialog">
     <div class="demo-sheet">
       <div class="sheet-handle"></div>
@@ -234,5 +325,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
+  <!-- DN_FEATURES_V07_AI_TIMELINE -->
+  <script src="dn-ai.js"></script>
 </body>
 </html>
