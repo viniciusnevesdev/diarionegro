@@ -35,44 +35,18 @@
 
   function resultHtml(data) {
     if (!data) return '<div class="dn-ai-empty">Ainda não interpretado.</div>';
-
-    const category = [data.categoria, data.subcategoria].filter(Boolean).join(' › ');
-    const people = Array.isArray(data.pessoas) ? data.pessoas : [];
-    const tags = Array.isArray(data.tags) ? data.tags : [];
-
-    const chips = (items) => items
-      .map((item) => `<span class="dn-ai-chip">${esc(item)}</span>`)
-      .join('');
-
+    if (!Array.isArray(data.tarefas) && data.tipo) {
+      const category = [data.categoria, data.subcategoria].filter(Boolean).join(' › ');
+      return `<div class="dn-ai-box"><div class="dn-ai-label">Resumo</div><div class="dn-ai-summary">${esc(data.resumo || '—')}</div></div><div class="dn-ai-grid"><div class="dn-ai-box"><div class="dn-ai-label">Categoria</div><div>${esc(category || '—')}</div></div><div class="dn-ai-box"><div class="dn-ai-label">Tipo</div><div>${esc(data.tipo || '—')}</div></div></div>`;
+    }
+    const tasks = Array.isArray(data.tarefas) ? data.tarefas : [];
+    const emotions = Array.isArray(data.emocoes) ? data.emocoes : [];
     return `
-      <div class="dn-ai-box">
-        <div class="dn-ai-label">Resumo</div>
-        <div class="dn-ai-summary">${esc(data.resumo || '—')}</div>
-      </div>
-
-      <div class="dn-ai-grid">
-        <div class="dn-ai-box">
-          <div class="dn-ai-label">Categoria</div>
-          <div>${esc(category || '—')}</div>
-        </div>
-        <div class="dn-ai-box">
-          <div class="dn-ai-label">Tipo</div>
-          <div>${esc(data.tipo || '—')}</div>
-        </div>
-      </div>
-
-      ${people.length ? `
-        <div class="dn-ai-box">
-          <div class="dn-ai-label">Pessoas</div>
-          <div class="dn-ai-chips">${chips(people)}</div>
-        </div>` : ''}
-
-      ${tags.length ? `
-        <div class="dn-ai-box">
-          <div class="dn-ai-label">Palavras-chave</div>
-          <div class="dn-ai-chips">${chips(tags)}</div>
-        </div>` : ''}
-    `;
+      <div class="dn-ai-box"><div class="dn-ai-label">Resumo</div><div class="dn-ai-summary">${esc(data.resumo || '—')}</div></div>
+      <div class="dn-ai-grid"><div class="dn-ai-box"><div class="dn-ai-label">Categoria</div><div>${esc(data.categoria || '—')}</div></div><div class="dn-ai-box"><div class="dn-ai-label">Intenção</div><div>${esc(data.intencao || '—')}</div></div></div>
+      ${tasks.length ? `<div class="dn-ai-box"><div class="dn-ai-label">Tarefas detectadas</div>${tasks.map((t)=>`<div class="dn-ai-summary">${esc(t.titulo)} <b>${esc(t.prioridade)}/10</b></div>`).join('')}</div>` : ''}
+      ${emotions.length ? `<div class="dn-ai-box"><div class="dn-ai-label">Estados emocionais</div><div class="dn-ai-chips">${emotions.map((e)=>`<span class="dn-ai-chip">${esc(e.nome)}</span>`).join('')}</div></div>` : ''}
+      ${data.sessao?.ativa ? `<div class="dn-ai-box"><div class="dn-ai-label">Sessão guiada</div><div class="dn-ai-summary">${esc(data.sessao.titulo)} · ${data.sessao.passos?.length || 0} etapas</div></div>` : ''}`;
   }
 
   function getCardText(card) {
@@ -80,31 +54,17 @@
   }
 
   async function syncTaskIfNeeded(data, id, text, status) {
-    if (data?.tipo !== 'tarefa') return;
-
     const createTask = window.DN_APP_API?.createTaskFromAI;
-
-    if (typeof createTask !== 'function') {
-      status.textContent =
-        'Interpretação concluída, mas a lista de tarefas não está disponível.';
-      return;
+    if (typeof createTask !== 'function') return;
+    const items = Array.isArray(data?.tarefas) ? data.tarefas : (data?.tipo === 'tarefa' ? [{ titulo: data.resumo || text, prioridade: 5, motivo_prioridade: '', area: data.categoria || '', prazo: '', energia: 'media', duracao_min: 0, confianca: .6 }] : []);
+    if (!items.length) return;
+    let created = 0;
+    for (let i = 0; i < items.length; i++) {
+      const t = items[i];
+      const outcome = await createTask({ sourceRecordId: id || null, taskKey: `${i}-${t.titulo}`, title: String(t.titulo || '').trim(), priority: t.prioridade ?? 5, priorityReason: t.motivo_prioridade || '', area: t.area || '', due: t.prazo || '', effort: t.energia || 'media', durationMin: t.duracao_min ?? null, confidence: t.confianca ?? null });
+      if (outcome?.created) created++;
     }
-
-    const outcome = await createTask({
-      sourceRecordId: id || null,
-      title: String(data.resumo || text || '').trim()
-    });
-
-    if (outcome?.created) {
-      status.textContent =
-        'Interpretação concluída. Tarefa adicionada à lista.';
-    } else if (outcome?.deleted) {
-      status.textContent =
-        'Interpretação concluída. Esta tarefa já foi excluída anteriormente.';
-    } else {
-      status.textContent =
-        'Interpretação concluída. Tarefa já estava na lista.';
-    }
+    if (created) status.textContent = `Interpretação concluída. ${created} tarefa${created > 1 ? 's' : ''} adicionada${created > 1 ? 's' : ''}.`;
   }
 
   function ensureCardUi(card) {
@@ -179,8 +139,8 @@
         throw new Error('Sua sessão do Supabase não está ativa.');
       }
 
-      const response = await client.functions.invoke('interpretar-registro', {
-        body: { id: id || null, texto: text }
+      const response = await client.functions.invoke('copiloto', {
+        body: { modo: 'interpretar', id: id || null, texto: text, regras: window.DN_COPILOT?.getRules?.() || [] }
       });
 
       if (response.error) throw response.error;
@@ -222,7 +182,7 @@
     detailDialog.className = 'dn-record-dialog';
     detailDialog.innerHTML = `
       <div class="dn-record-sheet">
-        <button class="dn-record-close" type="button" aria-label="Fechar">×</button>
+        <button class="dn-record-close" type="button" aria-label="Fechar">${window.DN_SYMBOLS?.icon?.('xmark.circle.fill') || 'Fechar'}</button>
         <div class="dn-record-kicker"></div>
         <p class="dn-record-text"></p>
         <div class="dn-record-actions">

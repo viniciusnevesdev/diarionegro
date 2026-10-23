@@ -139,6 +139,11 @@
       .replaceAll("'", '&#039;');
   }
 
+  function dnIcon(name, className = '') {
+    const api = window.DN_SYMBOLS;
+    return api?.icon ? api.icon(name, className) : '';
+  }
+
   function updateDateAndGreeting() {
     const now = new Date();
     const label = new Intl.DateTimeFormat('pt-BR', {
@@ -258,51 +263,88 @@
   // DN_FEATURES_V072_AI_TASK_SYNC
   window.DN_APP_API = window.DN_APP_API || {};
 
-  window.DN_APP_API.createTaskFromAI = async ({ sourceRecordId, title } = {}) => {
+  window.DN_APP_API.recordEvent = insertStructuredEvent;
+  window.DN_APP_API.getClient = () => client;
+  window.DN_APP_API.getSession = () => session;
+  window.DN_APP_API.recordNote = async (textValue, inputType = 'texto') => {
+    if (!session) throw new Error('Sessão não disponível.');
+    const text = String(textValue || '').trim();
+    if (!text) return null;
+    const now = new Date();
+    const row = {
+      id: generateRecordId(now), schema_version: 2, registrado_em: now.toISOString(),
+      texto_original: text, origem: 'pwa', entrada: NOTE_INPUTS.includes(inputType) ? inputType : 'texto',
+      versao_cliente: 'pwa-0.8'
+    };
+    const { error } = await client.from('registros').insert(row);
+    if (error) throw error;
+    await loadRecords();
+    return row;
+  };
+  window.DN_APP_API.getTasks = () => tasks.map((item) => ({ ...item }));
+  window.DN_APP_API.reloadState = loadAppState;
+
+  window.DN_APP_API.createTaskFromAI = async ({
+    sourceRecordId, taskKey, title, priority = 5, priorityReason = '', area = '',
+    due = '', effort = 'media', durationMin = null, confidence = null
+  } = {}) => {
     if (!session) throw new Error('Sessão não disponível.');
 
     const sourceId = String(sourceRecordId || '').trim();
     const cleanTitle = String(title || '').trim();
+    if (!cleanTitle) throw new Error('A IA não forneceu texto suficiente para criar a tarefa.');
 
-    if (!cleanTitle) {
-      throw new Error('A IA não forneceu texto suficiente para criar a tarefa.');
-    }
-
-    const safeSource = sourceId
-      .replace(/[^a-zA-Z0-9_-]/g, '')
-      .slice(-90);
-
+    const safeSource = sourceId.replace(/[^a-zA-Z0-9_-]/g, '').slice(-70);
+    const safeKey = String(taskKey || cleanTitle).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
     const id = safeSource
-      ? `tk-ai-${safeSource}`
+      ? `tk-ai-${safeSource}-${safeKey || 'acao'}`
       : generateRecordId(new Date()).replace('dn-', 'tk-ai-');
 
     if (taskHistoryIds.has(id)) {
       const existing = tasks.find((item) => item.id === id) || null;
-
-      return {
-        created: false,
-        exists: Boolean(existing),
-        deleted: !existing,
-        task: existing
-      };
+      return { created: false, exists: Boolean(existing), deleted: !existing, task: existing };
     }
 
     await insertStructuredEvent('tarefa_criada', {
-      task_id: id,
-      title: cleanTitle,
-      created_at: new Date().toISOString(),
-      source: 'ia',
-      source_record_id: sourceId || null
+      task_id: id, title: cleanTitle, created_at: new Date().toISOString(),
+      source: 'ia', source_record_id: sourceId || null,
+      priority: Math.max(0, Math.min(10, Number(priority) || 0)),
+      priority_reason: String(priorityReason || ''), area: String(area || ''),
+      due: String(due || ''), effort: String(effort || 'media'),
+      duration_min: durationMin == null ? null : Number(durationMin),
+      confidence: confidence == null ? null : Number(confidence)
     });
-
     await loadAppState();
+    return { created: true, exists: true, deleted: false, task: tasks.find((item) => item.id === id) || null };
+  };
 
-    return {
-      created: true,
-      exists: true,
-      deleted: false,
-      task: tasks.find((item) => item.id === id) || null
-    };
+  window.DN_APP_API.editTask = async (taskIdValue, patch = {}) => {
+    const id = String(taskIdValue || '');
+    if (!id) throw new Error('Tarefa inválida.');
+    await insertStructuredEvent('tarefa_editada', { task_id: id, ...patch });
+    await loadAppState();
+    return tasks.find((item) => item.id === id) || null;
+  };
+
+  window.DN_APP_API.deleteTask = async (taskIdValue) => {
+    const id = String(taskIdValue || '');
+    if (!id) return;
+    await insertStructuredEvent('tarefa_excluida', { task_id: id, deleted_at: new Date().toISOString() });
+    await loadAppState();
+  };
+
+  window.DN_APP_API.startTask = async (taskIdValue) => {
+    const id = String(taskIdValue || '');
+    await insertStructuredEvent('tarefa_iniciada', { task_id: id, started_at: new Date().toISOString() });
+    await loadAppState();
+  };
+
+  window.DN_APP_API.completeTask = async (taskIdValue) => {
+    const id = String(taskIdValue || '');
+    await insertStructuredEvent('tarefa_concluida', { task_id: id, completed_at: new Date().toISOString() });
+    await loadAppState();
   };
 
   // ---------- LINHA DO TEMPO ----------
@@ -749,7 +791,7 @@
         <button class="manager-row" type="button" data-habit-id="${escapeHtml(habit.id)}">
           <span class="manager-dot habit-${escapeHtml(habit.color || 'cyan')}"></span>
           <span><strong>${escapeHtml(habit.title)}</strong><small>${value} ${escapeHtml(unit)} · ${habit.mode === 'avoid' ? 'evitando' : 'mantendo'}</small></span>
-          <span class="chevron">›</span>
+          ${dnIcon('chevron.right', 'dn-manager-chevron')}
         </button>`;
     }).join('');
   }
@@ -795,14 +837,16 @@
   function taskRowHtml(task) {
     const done = task.status === 'done';
     const started = task.status === 'started';
+    const priority = Number.isFinite(Number(task.priority)) ? Math.max(0, Math.min(10, Number(task.priority))) : 5;
+    const iconName = done ? 'checkmark.circle.fill' : started ? 'clock.fill' : 'list.bullet';
     return `
       <button class="task-row ${done ? 'done' : started ? 'running' : ''}" type="button" data-task-id="${escapeHtml(task.id)}">
-        <span class="task-icon ${done ? 'task-green' : started ? 'task-blue' : 'task-violet'}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">${done ? '<path d="m6 12 4 4 8-9"/>' : started ? '<path d="M8 5v14l11-7Z"/>' : '<rect x="5" y="5" width="14" height="14" rx="3"/>'}</svg>
+        <span class="task-icon ${done ? 'task-green' : started ? 'task-blue' : priority >= 8 ? 'task-pink' : 'task-violet'}">
+          ${dnIcon(iconName, 'dn-task-symbol')}
         </span>
-        <span class="task-name">${escapeHtml(task.title)}<small>${escapeHtml(taskStatusText(task))}</small></span>
-        <span class="task-time">${done ? new Intl.DateTimeFormat('pt-BR', {hour:'2-digit',minute:'2-digit'}).format(new Date(task.completed_at)) : started ? 'agora' : '—'}</span>
-        <span class="${done ? 'checkmark' : 'empty-check'}">${done ? '<svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg>' : ''}</span>
+        <span class="task-name">${escapeHtml(task.title)}<small>${escapeHtml(taskStatusText(task))}${task.area ? ` · ${escapeHtml(task.area)}` : ''}</small></span>
+        <span class="task-priority" aria-label="Prioridade ${priority} de 10">${priority}/10</span>
+        <span class="${done ? 'checkmark' : 'empty-check'}">${done ? dnIcon('checkmark.circle.fill', 'dn-task-check') : ''}</span>
       </button>`;
   }
 
@@ -810,7 +854,7 @@
     if (!tasks.length) {
       taskList.innerHTML = [1, 2, 3].map((n) => `
         <button class="task-row task-placeholder" type="button" data-placeholder-task>
-          <span class="task-icon task-violet"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/></svg></span>
+          <span class="task-icon task-violet">${dnIcon('list.bullet', 'dn-task-symbol')}</span>
           <span class="task-name">Tarefa ${n}<small>Toque para substituir por uma tarefa real</small></span>
           <span class="task-time">—</span>
           <span class="empty-check"></span>
@@ -820,7 +864,7 @@
 
     const ordered = [...tasks].sort((a, b) => {
       const rank = { started: 0, open: 1, done: 2 };
-      return rank[a.status] - rank[b.status] || new Date(b.created_at) - new Date(a.created_at);
+      return rank[a.status] - rank[b.status] || (Number(b.priority || 5) - Number(a.priority || 5)) || new Date(b.created_at) - new Date(a.created_at);
     });
     taskList.innerHTML = ordered.slice(0, 4).map(taskRowHtml).join('');
   }
@@ -835,7 +879,7 @@
       <button class="manager-row" type="button" data-task-id="${escapeHtml(task.id)}">
         <span class="manager-status ${escapeHtml(task.status)}"></span>
         <span><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(taskStatusText(task))}</small></span>
-        <span class="chevron">›</span>
+        ${dnIcon('chevron.right', 'dn-manager-chevron')}
       </button>`).join('');
   }
 
@@ -864,6 +908,7 @@
     taskDetailContent.innerHTML = `
       <div class="detail-kicker">TAREFA</div>
       <h2>${escapeHtml(task.title)}</h2>
+      <div class="detail-priority">Prioridade <strong>${escapeHtml(Number(task.priority ?? 5))}/10</strong>${task.priority_reason ? `<span>${escapeHtml(task.priority_reason)}</span>` : ''}</div>
       ${extra}
       <p class="detail-muted">Criada em ${escapeHtml(created)}</p>`;
     startTaskButton.hidden = task.status !== 'open';
@@ -1109,7 +1154,7 @@
       await insertStructuredEvent(existing ? 'tarefa_editada' : 'tarefa_criada', {
         task_id: id,
         title,
-        ...(existing ? {} : { created_at: new Date().toISOString() })
+        ...(existing ? {} : { created_at: new Date().toISOString(), priority: 5, source: 'manual' })
       });
       taskFormDialog.close();
       showToast(existing ? 'Tarefa atualizada' : 'Tarefa criada');

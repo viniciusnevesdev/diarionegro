@@ -12,6 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="copiloto.css" />
 </head>
 <body>
   <!-- DN_FEATURES_V05 -->
@@ -29,20 +30,20 @@
 
       <div class="top-actions" aria-label="Ações rápidas">
         <button class="icon-btn glass" aria-label="Pesquisar" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <span data-dn-symbol="magnifyingglass"></span>
         </button>
         <button class="icon-btn glass" aria-label="Estatísticas" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9M12 19V4M19 19v-7"/></svg>
+          <span data-dn-symbol="chart.bar.fill"></span>
         </button>
         <button class="icon-btn glass" aria-label="Ajustes" type="button" id="accountButton">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.86 2.86-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21h-4v-.1A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.86-2.86.06-.06A1.7 1.7 0 0 0 4.2 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2.4v-4h.1A1.7 1.7 0 0 0 4.2 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06L6.66 3.8l.06.06A1.7 1.7 0 0 0 8.6 4.2a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2.4h4v.1A1.7 1.7 0 0 0 15 4.2a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.86 2.86-.06.06A1.7 1.7 0 0 0 19.4 8.6a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1.1.4h.1v4h-.1a1.7 1.7 0 0 0-1.7 1Z"/></svg>
+          <span data-dn-symbol="gearshape.fill"></span>
         </button>
       </div>
     </header>
 
     <section class="greeting-card glass-card">
       <div class="sun-chip" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <span data-dn-symbol="sun.max.fill"></span>
       </div>
       <div class="greeting-copy">
         <div class="eyebrow" id="todayLabel">DOM, 18 DE OUT</div>
@@ -50,7 +51,7 @@
         <p>Como você está se sentindo hoje?</p>
       </div>
       <button class="primary-btn" type="button" data-demo="register">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-dn-symbol="plus"></span>
         <span>Registrar</span>
       </button>
     </section>
@@ -58,7 +59,7 @@
     <section class="section-block habits-section">
       <div class="section-heading">
         <h2>Hábitos & metas</h2>
-        <button type="button" class="text-btn" id="openHabitsManager">Ver todos <span>→</span></button>
+        <button type="button" class="text-btn" id="openHabitsManager">Ver todos <span data-dn-symbol="chevron.right"></span></button>
       </div>
 
       <div class="habit-grid" id="habitGrid" aria-live="polite"></div>
@@ -67,13 +68,13 @@
     <section class="assistant-card glass-card">
       <div class="assistant-title-row">
         <div class="assistant-title">
-          <div class="spark" aria-hidden="true">✦</div>
+          <div class="spark" aria-hidden="true" data-dn-symbol="sparkles"></div>
           <div>
             <h2>Assistente inicial</h2>
             <p>Suas tarefas de agora.</p>
           </div>
         </div>
-        <button type="button" class="text-btn" id="openTasksManager">Ver todas <span>→</span></button>
+        <button type="button" class="text-btn" id="openTasksManager">Ver todas <span data-dn-symbol="chevron.right"></span></button>
       </div>
 
       <div class="task-list" id="taskList" aria-live="polite"></div>
@@ -86,7 +87,7 @@
     <section class="section-block notes-section">
       <div class="section-heading">
         <h2>Últimas anotações</h2>
-        <button type="button" class="text-btn" id="openTimelineFromNotes">Ver todas <span>→</span></button>
+        <button type="button" class="text-btn" id="openTimelineFromNotes">Ver todas <span data-dn-symbol="chevron.right"></span></button>
       </div>
 
       <div class="notes-row" id="realNotes">
@@ -108,10 +109,7 @@
         </div>
 
         <button class="icon-btn glass" id="timelineRefresh" aria-label="Atualizar histórico" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20 6v5h-5"/>
-            <path d="M19 11a7 7 0 1 0 1 5"/>
-          </svg>
+          <span data-dn-symbol="arrow.trianglehead.clockwise"></span>
         </button>
       </header>
 
@@ -125,25 +123,25 @@
 
     <nav class="bottom-dock glass-card" aria-label="Navegação principal">
       <button class="dock-item active" id="homeNavButton" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 11 8-7 8 7v9H5v-9Z"/></svg>
+        <span data-dn-symbol="house.fill"></span>
         <span>Início</span>
       </button>
       <button class="dock-item" id="timelineNavButton" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h13M7 12h13M7 18h13"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+        <span data-dn-symbol="list.bullet"></span>
         <span>Linha do tempo</span>
       </button>
 
       <button class="dock-plus" type="button" data-demo="register" aria-label="Registrar">
         <span class="plus-led"></span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-dn-symbol="plus"></span>
       </button>
 
       <button class="dock-item" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9M12 19V4M19 19v-7"/></svg>
+        <span data-dn-symbol="chart.bar.fill"></span>
         <span>Estatísticas</span>
       </button>
       <button class="dock-item" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>
+        <span data-dn-symbol="person.fill"></span>
         <span>Perfil</span>
       </button>
     </nav>
@@ -251,7 +249,7 @@
       <div id="habitDetailContent"></div>
       <div class="sheet-actions stacked-actions">
         <button type="button" class="secondary-btn" id="editHabitButton">Editar</button>
-        <button type="button" class="danger-btn" id="failHabitButton">☹ Falhei desta vez</button>
+        <button type="button" class="danger-btn" id="failHabitButton">Falhei desta vez</button>
         <button type="button" class="ghost-danger-btn" id="deleteHabitButton">Excluir hábito</button>
         <button type="button" class="primary-btn" id="closeHabitDetail">Fechar</button>
       </div>
@@ -304,6 +302,35 @@
       <div class="sheet-handle"></div>
       <div class="manager-heading">
         <div><h2>Tarefas</h2><p class="sheet-copy">Abertas, em andamento e concluídas.</p></div>
+        <button type="button" class="mini-add-btn" id="addTaskFromManager">+ Adicionar</button>
+      </div>
+      <div id="tasksManagerList" class="manager-list"></div>
+      <button type="button" class="primary-btn sheet-button" id="closeTasksManager">Fechar</button>
+    </div>
+  </dialog>
+
+  <dialog id="accountDialog" class="demo-dialog">
+    <div class="demo-sheet">
+      <div class="sheet-handle"></div>
+      <h2>Conta</h2>
+      <p class="sheet-copy" id="accountEmail">Conectando…</p>
+      <button type="button" class="secondary-btn sheet-button" id="logoutButton">Sair da conta</button>
+      <button type="button" class="primary-btn sheet-button" id="closeAccount">Fechar</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="dn-symbols.js"></script>
+  <script src="app.js"></script>
+  <script src="copiloto.js"></script>
+  <!-- DN_FEATURES_V07_AI_TIMELINE -->
+  <script src="dn-ai.js"></script>
+</body>
+</html>
+="sheet-copy">Abertas, em andamento e concluídas.</p></div>
         <button type="button" class="mini-add-btn" id="addTaskFromManager">+ Adicionar</button>
       </div>
       <div id="tasksManagerList" class="manager-list"></div>

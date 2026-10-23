@@ -693,3 +693,6 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
   color: #7a8090;
   font-size: 10px;
 }
+
+/* DN_FEATURES_V08_TASK_PRIORITY */
+.task-row { grid-template-columns:44px minmax(0,1fr) 52px 34px; }
