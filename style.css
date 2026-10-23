@@ -1107,3 +1107,63 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
   .dock-item > span[data-dn-symbol] { width: 34px; height: 33px; }
   .dock-item svg { width: 32px !important; height: 32px !important; }
 }
+
+/* DN_HOTFIX_V0833 — ícones inferiores realmente maiores */
+.bottom-dock {
+  height: 48px;
+  min-height: 48px;
+  border-radius: 9999px;
+}
+
+.dock-item {
+  height: 46px;
+  gap: 0;
+  overflow: visible;
+}
+
+.dock-item .dn-symbol,
+.dock-item > span[data-dn-symbol] {
+  width: 42px !important;
+  height: 38px !important;
+  display: grid !important;
+  place-items: center !important;
+  line-height: 0 !important;
+  overflow: visible !important;
+  flex: 0 0 auto;
+}
+
+.dock-item svg {
+  width: 39px !important;
+  height: 39px !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  transform: scale(1.12) !important;
+  transform-origin: center !important;
+  overflow: visible !important;
+}
+
+.dock-item > span:last-child:not([data-dn-symbol]) {
+  font-size: 7px !important;
+  line-height: .95 !important;
+  margin-top: -3px !important;
+  letter-spacing: -.08px;
+}
+
+.dock-item.active::before {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+@media (max-width: 370px) {
+  .dock-item .dn-symbol,
+  .dock-item > span[data-dn-symbol] {
+    width: 39px !important;
+    height: 36px !important;
+  }
+
+  .dock-item svg {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
