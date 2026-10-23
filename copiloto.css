@@ -421,3 +421,9 @@
 #dnChooseNow > .dn-symbol {
   font-size: 21px;
 }
+
+/* DN_CHOOSE_NOW_CENTER_FIX */
+#dnChooseNow {
+  margin-left: auto;
+  margin-right: auto;
+}
