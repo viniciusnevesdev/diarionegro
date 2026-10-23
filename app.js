@@ -117,26 +117,86 @@
   let selectedHabitId = null;
   let selectedTaskId = null;
 
-  function ensureAccountDialog() {
-    if (accountDialog && accountEmail && logoutButton && closeAccount) return;
-    document.getElementById('accountDialog')?.remove();
-    document.body.insertAdjacentHTML('beforeend', `
-      <dialog id="accountDialog" class="demo-dialog auth-account-dialog">
-        <div class="demo-sheet account-sheet">
-          <div class="sheet-handle" aria-hidden="true"></div>
-          <h2>Conta</h2>
-          <p class="sheet-copy" id="accountEmail">Conta conectada</p>
-          <button type="button" class="secondary-btn sheet-button" id="logoutButton">Sair da conta</button>
-          <button type="button" class="primary-btn sheet-button" id="closeAccount">Fechar</button>
-        </div>
-      </dialog>`);
-    accountDialog = document.getElementById('accountDialog');
-    accountEmail = document.getElementById('accountEmail');
-    logoutButton = document.getElementById('logoutButton');
-    closeAccount = document.getElementById('closeAccount');
+  function cleanupLeakedAccountMarkup() {
+    const badExact = new Set(['Conta', 'Conectando…', 'Conectando...', 'Sair da conta']);
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const textVictims = [];
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const parent = node.parentElement;
+      if (!parent || parent.closest('dialog')) continue;
+      const text = String(node.textContent || '').trim();
+      if (!text) continue;
+      if (/v\s+class=["']sheet-handle["']|sheet-handle["']?>/i.test(text)) {
+        textVictims.push(node);
+      }
+    }
+
+    for (const node of textVictims) node.remove();
+
+    document.querySelectorAll('body h2, body p, body button').forEach((el) => {
+      if (el.closest('dialog')) return;
+      const text = String(el.textContent || '').trim();
+      if (badExact.has(text)) el.remove();
+    });
+
+    document.querySelectorAll('body > .sheet-handle, body > .sheet-copy, body > #accountEmail, body > #logoutButton, body > #closeAccount')
+      .forEach((el) => el.remove());
   }
 
+  function ensureAccountDialog() {
+    cleanupLeakedAccountMarkup();
+    if (accountDialog && accountEmail && logoutButton && closeAccount) return;
+
+    document.getElementById('accountDialog')?.remove();
+
+    const dialog = document.createElement('dialog');
+    dialog.id = 'accountDialog';
+    dialog.className = 'demo-dialog auth-account-dialog';
+
+    const sheet = document.createElement('div');
+    sheet.className = 'demo-sheet account-sheet';
+
+    const handle = document.createElement('div');
+    handle.className = 'sheet-handle';
+    handle.setAttribute('aria-hidden', 'true');
+
+    const title = document.createElement('h2');
+    title.textContent = 'Conta';
+
+    const email = document.createElement('p');
+    email.className = 'sheet-copy';
+    email.id = 'accountEmail';
+    email.textContent = 'Conta conectada';
+
+    const logout = document.createElement('button');
+    logout.type = 'button';
+    logout.className = 'secondary-btn sheet-button';
+    logout.id = 'logoutButton';
+    logout.textContent = 'Sair da conta';
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'primary-btn sheet-button';
+    close.id = 'closeAccount';
+    close.textContent = 'Fechar';
+
+    sheet.append(handle, title, email, logout, close);
+    dialog.append(sheet);
+    document.body.append(dialog);
+
+    accountDialog = dialog;
+    accountEmail = email;
+    logoutButton = logout;
+    closeAccount = close;
+  }
+
+  cleanupLeakedAccountMarkup();
   ensureAccountDialog();
+  requestAnimationFrame(cleanupLeakedAccountMarkup);
+  setTimeout(cleanupLeakedAccountMarkup, 250);
+  setTimeout(cleanupLeakedAccountMarkup, 1200);
 
   function showToast(message) {
     toast.textContent = message;
