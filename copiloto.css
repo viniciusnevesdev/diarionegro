@@ -404,3 +404,20 @@
     animation: none;
   }
 }
+
+/* DN_CHOOSE_NOW_VISUAL */
+#dnChooseNow {
+  grid-column: 1 / -1;
+  width: 72%;
+  min-height: 58px;
+  justify-self: center;
+  padding: 0 20px;
+  border-radius: 999px;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 720;
+}
+
+#dnChooseNow > .dn-symbol {
+  font-size: 21px;
+}
