@@ -42,6 +42,19 @@
   --type-title: 20px;
   --type-body: 14px;
   --type-detail: 11px;
+
+  /* Pesos tipográficos */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 650;
+  --weight-bold: 700;
+  --weight-heavy: 750;
+
+  /* Alturas de linha */
+  --leading-tight: 1.05;
+  --leading-snug: 1.2;
+  --leading-normal: 1.35;
+  --leading-relaxed: 1.45;
 }
 
 @media (max-width: 370px) {
