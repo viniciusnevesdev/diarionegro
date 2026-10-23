@@ -321,7 +321,7 @@
 }
 
 #dnChooseNow {
-  animation: dn-choose-now-bounce 3s ease infinite both;
+  animation: dn-choose-now-bounce 4.2s ease infinite both;
   will-change: transform;
 }
 
@@ -394,7 +394,7 @@
 }
 
 #dnChooseNow > .dn-symbol {
-  animation: dn-choose-now-sparkle 3s ease infinite both;
+  animation: dn-choose-now-sparkle 4.2s ease infinite both;
   transform-origin: center;
   will-change: transform, color, filter;
 }
