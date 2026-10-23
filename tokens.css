@@ -1,0 +1,41 @@
+/*
+  DIÁRIO NEGRO — TOKENS GLOBAIS
+
+  Fonte de verdade do sistema de design.
+
+  Regra:
+  - tokens globais são definidos somente neste arquivo;
+  - style.css e copiloto.css podem usar var(--token);
+  - eles não devem redefinir tokens globais.
+*/
+
+:root {
+  --bg: #f7f6f2;
+  --ink: #101426;
+  --muted: #71778e;
+  --line: rgba(255,255,255,.55);
+
+  --glass: rgba(255,255,255,.49);
+  --glass-strong: rgba(255,255,255,.68);
+  --shadow: 0 16px 40px rgba(54, 52, 78, .09);
+
+  --radius-lg: 30px;
+  --radius-md: 23px;
+  --radius-sm: 18px;
+  --control-radius: 999px;
+
+  --page-x: 16px;
+  --gap: 12px;
+  --dock-h: 62px;
+
+  --type-display: 34px;
+  --type-title: 20px;
+  --type-body: 14px;
+  --type-detail: 11px;
+}
+
+@media (max-width: 370px) {
+  :root {
+    --page-x: 12px;
+  }
+}

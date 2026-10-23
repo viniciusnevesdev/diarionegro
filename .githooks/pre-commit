@@ -6,6 +6,41 @@ from pathlib import Path
 from datetime import datetime
 import re
 
+
+# DN_DESIGN_TOKENS_GUARD
+tokens_path = Path("tokens.css")
+if not tokens_path.exists():
+    raise SystemExit("ERRO: tokens.css não encontrado.")
+
+tokens_text = tokens_path.read_text(encoding="utf-8")
+token_names = set(re.findall(
+    r'--([A-Za-z0-9_-]+)\s*:',
+    tokens_text
+))
+
+violations = []
+
+for css_path in Path(".").glob("*.css"):
+    if css_path.name == "tokens.css":
+        continue
+
+    css_text = css_path.read_text(encoding="utf-8")
+
+    for token in sorted(token_names):
+        if re.search(
+            rf'--{re.escape(token)}\s*:',
+            css_text
+        ):
+            violations.append(
+                f"{css_path}: --{token}"
+            )
+
+if violations:
+    print("ERRO: token global definido fora de tokens.css")
+    for item in violations:
+        print(f"  {item}")
+    raise SystemExit(1)
+
 version = Path("VERSION").read_text(
     encoding="utf-8"
 ).strip()
@@ -37,6 +72,7 @@ if n1 != 1 or n2 != 1:
     )
 
 assets = [
+    "tokens.css",
     "style.css",
     "copiloto.css",
     "config.js",
