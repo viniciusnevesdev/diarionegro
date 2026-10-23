@@ -295,3 +295,38 @@
   .dn-primary-action { transition:box-shadow .4s ease; }
   .dn-primary-action::before { opacity:.46; }
 }
+
+/* DN_CHOOSE_NOW_BOUNCE */
+@keyframes dn-choose-now-bounce {
+  0% {
+    transform: translateY(0);
+  }
+
+  11% {
+    transform: translateY(-27.5px);
+  }
+
+  20.17% {
+    transform: translateY(2.75px);
+  }
+
+  26.4% {
+    transform: translateY(-9.625px);
+  }
+
+  36.67%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+#dnChooseNow {
+  animation: dn-choose-now-bounce 3s ease infinite both;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #dnChooseNow {
+    animation: none;
+  }
+}
