@@ -1,0 +1,64 @@
+#!/bin/sh
+set -eu
+
+python3 - <<'PY'
+from pathlib import Path
+from datetime import datetime
+import re
+
+version = Path("VERSION").read_text(
+    encoding="utf-8"
+).strip()
+
+build = datetime.now().strftime(
+    "%Y%m%d-%H%M%S-%f"
+)
+
+p = Path("index.html")
+s = p.read_text(encoding="utf-8")
+
+s, n1 = re.subn(
+    r'(<meta name="dn-version" content=")[^"]*(")',
+    lambda m: m.group(1) + version + m.group(2),
+    s,
+    count=1
+)
+
+s, n2 = re.subn(
+    r'(<meta name="dn-build" content=")[^"]*(")',
+    lambda m: m.group(1) + build + m.group(2),
+    s,
+    count=1
+)
+
+if n1 != 1 or n2 != 1:
+    raise SystemExit(
+        "ERRO: metadados de versão não encontrados."
+    )
+
+assets = [
+    "style.css",
+    "copiloto.css",
+    "config.js",
+    "dn-symbols.js",
+    "app.js",
+    "version-check.js",
+    "copiloto.js",
+    "dn-ai.js",
+]
+
+for asset in assets:
+    s = re.sub(
+        rf'(["\']){re.escape(asset)}(?:\?v=[^"\']*)?(["\'])',
+        rf'\1{asset}?v={build}\2',
+        s,
+        count=1
+    )
+
+p.write_text(s, encoding="utf-8")
+
+print(f"Diário Negro v{version}")
+print(f"Build interno: {build}")
+PY
+
+git add index.html VERSION

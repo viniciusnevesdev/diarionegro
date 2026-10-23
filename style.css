@@ -1024,3 +1024,132 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
 .task-detail-title-row h2 { margin:0; min-width:0; }
 .task-detail-icon { width:42px; height:42px; flex:0 0 42px; border-radius:15px; display:grid; place-items:center; background:linear-gradient(145deg,rgba(235,228,255,.92),rgba(222,239,255,.90)); color:#503ba7; box-shadow:inset 0 1px 0 #fff; }
 .task-detail-icon .dn-symbol { font-size:22px; }
+
+/* DN_VERSION_STATUS */
+.topbar {
+  position: relative;
+}
+
+.dn-version-pendant {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  z-index: 3;
+  color: #747b8d;
+  opacity: .46;
+}
+
+.dn-version-pendant .dn-symbol,
+.dn-version-pendant svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dn-version-pendant[data-state="current"] {
+  color: #34845f;
+  opacity: .52;
+}
+
+.dn-version-pendant[data-state="stale"] {
+  color: #c27b21;
+  opacity: .72;
+}
+
+.dn-version-pendant[data-state="error"],
+.dn-version-pendant[data-state="checking"] {
+  color: #777d8d;
+  opacity: .36;
+}
+
+.dn-version-panel {
+  margin: 14px 0;
+  padding: 13px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.48);
+  border: 1px solid rgba(255,255,255,.72);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.82);
+}
+
+.dn-version-panel-heading {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 9px;
+  align-items: center;
+  margin-bottom: 11px;
+}
+
+.dn-version-panel-heading > span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: #687086;
+}
+
+.dn-version-panel-heading > span svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dn-version-panel-heading strong {
+  display: block;
+  font-size: 12.5px;
+}
+
+.dn-version-panel-heading div > span {
+  display: block;
+  margin-top: 2px;
+  color: #737a8d;
+  font-size: 10.5px;
+  line-height: 1.3;
+}
+
+.dn-version-row {
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(110,117,138,.10);
+  font-size: 11px;
+}
+
+.dn-version-row span {
+  color: #757c8e;
+}
+
+.dn-version-row strong {
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.dn-version-update-btn {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 9px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: rgba(232,235,244,.84);
+  color: #34394b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dn-version-update-btn[hidden] {
+  display: none !important;
+}
+
+.dn-version-update-btn .dn-symbol,
+.dn-version-update-btn svg {
+  width: 17px;
+  height: 17px;
+}

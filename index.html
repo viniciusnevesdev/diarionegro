@@ -11,8 +11,12 @@
   <title>Diário Negro</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="copiloto.css" />
+  <link rel="stylesheet" href="style.css?v=20261023-103246-293809" />
+  <link rel="stylesheet" href="copiloto.css?v=20261023-103246-293809" />
+  <!-- DN_VERSION_SYSTEM_START -->
+  <meta name="dn-version" content="0.8.2" />
+  <meta name="dn-build" content="20261023-103246-293809" />
+  <!-- DN_VERSION_SYSTEM_END -->
 </head>
 <body>
   <!-- DN_FEATURES_V05 -->
@@ -26,6 +30,17 @@
       <div class="brand-wrap">
         <h1 class="brand">Diário<br><span>Negro</span></h1>
       </div>
+
+      <button
+        type="button"
+        id="dnVersionPendant"
+        class="dn-version-pendant"
+        data-state="checking"
+        aria-label="Status da versão"
+      >
+        <span id="dnVersionPendantIcon"
+              data-dn-symbol="arrow.trianglehead.clockwise"></span>
+      </button>
 
       <div class="top-actions" aria-label="Ações rápidas">
         <button class="icon-btn glass" aria-label="Pesquisar" type="button">
@@ -322,6 +337,36 @@
       <div class="sheet-handle"></div>
       <h2>Conta</h2>
       <p class="sheet-copy" id="accountEmail">Conectando…</p>
+
+      <section class="dn-version-panel" id="dnVersionPanel">
+        <div class="dn-version-panel-heading">
+          <span id="dnVersionPanelIcon"
+                data-dn-symbol="arrow.trianglehead.clockwise"></span>
+          <div>
+            <strong>Versão do aplicativo</strong>
+            <span id="dnVersionStateText">Verificando versão publicada…</span>
+          </div>
+        </div>
+
+        <div class="dn-version-row">
+          <span>Versão aberta</span>
+          <strong id="dnVersionOpen">v0.8.2</strong>
+        </div>
+
+        <div class="dn-version-row">
+          <span>Versão publicada</span>
+          <strong id="dnVersionPublished">Verificando…</strong>
+        </div>
+
+        <button type="button"
+                class="dn-version-update-btn"
+                id="dnVersionUpdate"
+                hidden>
+          <span data-dn-symbol="arrow.trianglehead.clockwise"></span>
+          <span>Carregar versão atual</span>
+        </button>
+      </section>
+
       <button type="button" class="secondary-btn sheet-button" id="logoutButton">Sair da conta</button>
       <button type="button" class="primary-btn sheet-button" id="closeAccount">Fechar</button>
     </div>
@@ -330,11 +375,12 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="dn-symbols.js"></script>
-  <script src="app.js"></script>
-  <script src="copiloto.js"></script>
+  <script src="config.js?v=20261023-103246-293809"></script>
+  <script src="dn-symbols.js?v=20261023-103246-293809"></script>
+  <script src="app.js?v=20261023-103246-293809"></script>
+  <script src="version-check.js?v=20261023-103246-293809"></script>
+  <script src="copiloto.js?v=20261023-103246-293809"></script>
   <!-- DN_FEATURES_V07_AI_TIMELINE -->
-  <script src="dn-ai.js"></script>
+  <script src="dn-ai.js?v=20261023-103246-293809"></script>
 </body>
 </html>
