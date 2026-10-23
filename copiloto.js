@@ -800,4 +800,30 @@
 })();
 g') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
+
+
+  // DN_HOTFIX_V0836_RECOVER_COPILOT
+  function repairCopilotUi() {
+    try {
+      if (!document.getElementById('dnCopilotCard')) {
+        ensureUi();
+      }
+    } catch (error) {
+      console.warn('DN Copiloto: falha ao reconstruir interface', error);
+    }
+  }
+
+  window.DN_COPILOT_REPAIR = repairCopilotUi;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', repairCopilotUi, { once: true });
+  } else {
+    repairCopilotUi();
+  }
+
+  requestAnimationFrame(repairCopilotUi);
+  setTimeout(repairCopilotUi, 120);
+  setTimeout(repairCopilotUi, 500);
+  setTimeout(repairCopilotUi, 1500);
+
 })();
