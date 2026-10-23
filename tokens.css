@@ -55,6 +55,20 @@
   --leading-snug: 1.2;
   --leading-normal: 1.35;
   --leading-relaxed: 1.45;
+
+  /* Cores semânticas */
+  --color-status-neutral: #757b8f;
+
+  --color-danger: #db1818;
+  --color-danger-soft: rgba(255,226,231,.72);
+
+  --color-success: #259859;
+  --color-success-soft: #daf1e4;
+
+  --color-warning: #fd9900;
+
+  --color-info: #193b8e;
+  --color-info-soft: #cde6ff;
 }
 
 @media (max-width: 370px) {
