@@ -17,6 +17,7 @@
   let activeSession = readJson(SESSION_KEY, null);
   let lastResult = null;
   let currentCorrection = null;
+  let resetInputOnNextOpen = false;
   let recorder = null;
   let recorderStream = null;
   let recorderChunks = [];
@@ -109,15 +110,14 @@
       <div class="dn-copilot-heading">
         <div class="dn-copilot-title-icon">${icon('sparkles')}</div>
         <div class="dn-copilot-heading-copy"><span>COPILOTO</span><h2>O que faço agora?</h2></div>
-        <button class="dn-copilot-icon-btn" id="dnTeachQuick" type="button" aria-label="Ensinar algo">${icon('brain.head.profile.fill')}</button>
       </div>
-      <div id="dnNextAction" class="dn-next-action">
-        <div class="dn-next-priority">—</div>
-        <div class="dn-next-copy"><strong>Eu posso escolher uma coisa por vez.</strong><span>Uso suas tarefas, prioridades e contexto recente.</span></div>
+      <div id="dnCopilotIdle" class="dn-copilot-idle">
+        <strong id="dnCopilotMicrocopy">Eu tô aqui pra ajudar você.</strong>
+        <span>Quando quiser, eu escolho uma coisa possível para o seu agora.</span>
       </div>
+      <div id="dnNextAction" class="dn-next-action" hidden></div>
       <div class="dn-copilot-actions">
-        <button class="dn-primary-action" id="dnChooseNow" type="button">${icon('sparkles')}<span>Escolher agora</span></button>
-        <button class="dn-secondary-action" id="dnOpenInput" type="button">${icon('plus')}<span>Jogar algo aqui</span></button>
+        <button class="dn-primary-action" id="dnChooseNow" type="button" data-intensity="medium">${icon('sparkles')}<span>Escolher agora</span></button>
       </div>
       <div id="dnActiveSession" class="dn-session-home" hidden></div>`;
     greeting?.insertAdjacentElement('afterend', card);
@@ -181,7 +181,7 @@
           <div class="dn-sheet-heading"><div><span class="dn-kicker">CHECK-IN</span><h2>Como você ficou?</h2><p id="dnMoodPromptText">Quero entender como isso te afetou, sem transformar a resposta em obrigação.</p></div><button type="button" class="dn-close-dialog" data-mood="ignore">${icon('xmark.circle.fill')}</button></div>
           <div class="dn-mood-actions">
             <button type="button" data-mood="better">${icon('heart.fill')}<span>Melhor</span></button>
-            <button type="button" data-mood="same">${icon('circle.fill')}<span>Igual</span></button>
+            <button type="button" data-mood="same">${icon('minus.circle.fill')}<span>Igual</span></button>
             <button type="button" data-mood="worse">${icon('exclamationmark.circle.fill')}<span>Pior</span></button>
           </div>
           <button type="button" class="dn-mood-explain" data-mood="explain">${icon('square.and.pencil')}<span>Quero explicar</span></button>
@@ -206,8 +206,6 @@
   }
 
   function bindUi() {
-    $('#dnOpenInput')?.addEventListener('click', () => openInput('text'));
-    $('#dnTeachQuick')?.addEventListener('click', () => openInput('teach'));
     $('#dnChooseNow')?.addEventListener('click', chooseNow);
     $$('.dn-close-dialog').forEach((b) => b.addEventListener('click', () => document.getElementById(b.dataset.close)?.close()));
     $$('.dn-input-tab').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.inputTab)));
@@ -232,7 +230,22 @@
     }, true);
   }
 
+  function resetUniversalInput() {
+    const text = $('#dnTextInput'); if (text) text.value = '';
+    const photo = $('#dnPhotoInput'); if (photo) photo.value = '';
+    const note = $('#dnPhotoNote'); if (note) note.value = '';
+    const info = $('#dnPhotoInfo'); if (info) info.textContent = 'Nenhuma foto selecionada.';
+    const result = $('#dnInterpretationResult'); if (result) { result.hidden = true; result.innerHTML = ''; }
+    const voice = $('#dnVoiceStatus'); if (voice) voice.textContent = 'Fale normalmente. Eu separo o que significa o quê.';
+    lastResult = null;
+    setStatus('');
+  }
+
   function openInput(tab = 'text') {
+    if (resetInputOnNextOpen) {
+      resetUniversalInput();
+      resetInputOnNextOpen = false;
+    }
     switchTab(tab);
     const d = $('#dnInputDialog');
     if (!d?.open) d?.showModal();
@@ -287,6 +300,7 @@
       const result = await invokeCopilot({ modo: 'interpretar', texto: text });
       await processInterpretation(result, sourceRecord?.id || uid('src'));
       renderResult(result);
+      resetInputOnNextOpen = true;
       setStatus('Interpretação concluída.', 'ok');
     } catch (error) { setStatus(error?.message || String(error), 'error'); }
     finally { setBusy(button, false); }
@@ -307,6 +321,7 @@
       const result = await invokeCopilot({ modo: 'interpretar', texto: note, imagem_data_url: prepared.dataUrl });
       await processInterpretation(result, uid('foto'));
       renderResult(result);
+      resetInputOnNextOpen = true;
       setStatus('Foto analisada. Se for uma organização, vou mostrar uma etapa por vez.', 'ok');
     } catch (error) { setStatus(error?.message || String(error), 'error'); }
     finally { setBusy(button, false); }
@@ -554,6 +569,68 @@
     });
   }
 
+  const COPILOT_MICROCOPY = [
+    'Eu tô aqui pra ajudar você.',
+    'Vamos escolher uma coisa de cada vez.',
+    'Se estiver difícil começar, eu escolho por você.',
+    'Vamos tirar uma coisa da sua cabeça.',
+    'Tem uma coisa que pode facilitar seu agora.',
+    'Eu vejo o que está pendente e te ajudo a escolher.'
+  ];
+
+  let microcopyIndex = Math.floor(Math.random() * COPILOT_MICROCOPY.length);
+  let motionTimer = null;
+  let microcopyTimer = null;
+
+  function setCopilotMicrocopy(text = '') {
+    const el = $('#dnCopilotMicrocopy');
+    if (!el) return;
+    el.classList.add('changing');
+    setTimeout(() => {
+      el.textContent = text || COPILOT_MICROCOPY[microcopyIndex % COPILOT_MICROCOPY.length];
+      el.classList.remove('changing');
+    }, 160);
+  }
+
+  function scheduleMicrocopy() {
+    clearTimeout(microcopyTimer);
+    const delay = 14000 + Math.random() * 14000;
+    microcopyTimer = setTimeout(() => {
+      microcopyIndex = (microcopyIndex + 1 + Math.floor(Math.random() * 2)) % COPILOT_MICROCOPY.length;
+      setCopilotMicrocopy();
+      scheduleMicrocopy();
+    }, delay);
+  }
+
+  function scheduleCopilotMotion() {
+    clearTimeout(motionTimer);
+    const button = $('#dnChooseNow');
+    if (!button) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      button.classList.add('dn-motion-soft-glow');
+      return;
+    }
+    const intensity = button.dataset.intensity || 'medium';
+    const ranges = intensity === 'high' ? [2800, 5200] : intensity === 'low' ? [6500, 11000] : [4200, 8200];
+    const delay = ranges[0] + Math.random() * (ranges[1] - ranges[0]);
+    motionTimer = setTimeout(() => {
+      const moves = intensity === 'high'
+        ? ['dn-motion-nudge','dn-motion-glow','dn-motion-hop','dn-motion-wiggle']
+        : ['dn-motion-nudge','dn-motion-glow','dn-motion-breathe'];
+      const move = moves[Math.floor(Math.random() * moves.length)];
+      button.classList.add(move);
+      setTimeout(() => button.classList.remove(move), move === 'dn-motion-glow' ? 1500 : 900);
+      scheduleCopilotMotion();
+    }, delay);
+  }
+
+  function setCopilotIntensity(priority = 5) {
+    const button = $('#dnChooseNow');
+    if (!button) return;
+    button.dataset.intensity = priority >= 8 ? 'high' : priority <= 3 ? 'low' : 'medium';
+    scheduleCopilotMotion();
+  }
+
   async function chooseNow() {
     const button = $('#dnChooseNow'); setBusy(button, true, 'Escolhendo…');
     try {
@@ -567,8 +644,12 @@
 
   function renderNextAction(a) {
     const box = $('#dnNextAction'); if (!box) return;
-    box.dataset.taskId = a.task_id || ''; box.dataset.title = a.titulo || ''; box.dataset.priority = String(clamp(a.prioridade,0,10));
-    box.innerHTML = `<div class="dn-next-priority">${clamp(a.prioridade,0,10)}<small>/10</small></div><div class="dn-next-copy"><span class="dn-next-type">${esc(a.tipo || 'ação')}</span><strong>${esc(a.titulo || 'Sem ação agora')}</strong><p>${esc(a.primeiro_passo || '')}</p><small>${esc(a.motivo || '')}</small></div><div class="dn-next-buttons"><button type="button" data-next-done>${icon('checkmark.circle.fill')}<span>Fiz</span></button><button type="button" data-next-other>${icon('clock.fill')}<span>Outra</span></button></div>`;
+    const priority = clamp(a.prioridade,0,10);
+    box.hidden = false;
+    $('#dnCopilotIdle')?.setAttribute('hidden','');
+    box.dataset.taskId = a.task_id || ''; box.dataset.title = a.titulo || ''; box.dataset.priority = String(priority);
+    box.innerHTML = `<div class="dn-next-copy"><div class="dn-next-topline"><span class="dn-next-type">${esc(a.tipo || 'ação')}</span><span class="dn-priority-pill">Prioridade ${priority}/10</span></div><strong>${esc(a.titulo || 'Sem ação agora')}</strong><p>${esc(a.primeiro_passo || '')}</p><small>${esc(a.motivo || '')}</small></div><div class="dn-next-buttons"><button type="button" data-next-done>${icon('checkmark.circle.fill')}<span>Fiz</span></button><button type="button" data-next-other>${icon('clock.fill')}<span>Outra</span></button></div>`;
+    setCopilotIntensity(priority);
   }
 
   async function handleNextActionClick(event) {
@@ -578,7 +659,7 @@
       const title = box?.dataset.title || 'uma tarefa';
       const priority = Number(box?.dataset.priority || 0);
       if (id && window.DN_APP_API?.completeTask) await window.DN_APP_API.completeTask(id);
-      box.innerHTML = `<div class="dn-next-priority done">${icon('checkmark.circle.fill')}</div><div class="dn-next-copy"><strong>Feito.</strong><span>Quando quiser, escolho a próxima.</span></div>`;
+      box.innerHTML = `<div class="dn-next-copy dn-next-done-copy"><span class="dn-done-icon">${icon('checkmark.circle.fill')}</span><div><strong>Feito.</strong><span>Quando quiser, escolho a próxima.</span></div></div>`; setCopilotMicrocopy('Boa. Uma coisa a menos na sua cabeça.'); setCopilotIntensity(3);
       if (priority >= 7) setTimeout(() => maybePromptMood({ reason: 'tarefa_importante_concluida', context: title }), 450);
     }
     if (event.target.closest('[data-next-other]')) {
@@ -709,6 +790,9 @@
     if (!config?.supabaseUrl || !config?.supabasePublishableKey || !sdk?.createClient) return;
     client = window.DN_APP_API?.getClient?.() || sdk.createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
     await Promise.allSettled([loadLearnedContext(), loadRecentEmotions()]);
+    setCopilotMicrocopy();
+    scheduleMicrocopy();
+    scheduleCopilotMotion();
     setTimeout(() => maybePromptMood({ reason: 'tempo_sem_checkin' }), 1200);
   }
 

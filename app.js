@@ -84,6 +84,10 @@
   const taskDetailDialog = document.getElementById('taskDetailDialog');
   const taskDetailContent = document.getElementById('taskDetailContent');
   const editTaskButton = document.getElementById('editTaskButton');
+  const changeTaskIconButton = document.getElementById('changeTaskIconButton');
+  const taskIconDialog = document.getElementById('taskIconDialog');
+  const taskIconGrid = document.getElementById('taskIconGrid');
+  const closeTaskIconPicker = document.getElementById('closeTaskIconPicker');
   const startTaskButton = document.getElementById('startTaskButton');
   const completeTaskButton = document.getElementById('completeTaskButton');
   const deleteTaskButton = document.getElementById('deleteTaskButton');
@@ -152,7 +156,35 @@
     todayLabel.textContent = label;
 
     const hour = now.getHours();
-    greetingTitle.textContent = hour < 12 ? 'Bom dia!' : hour < 18 ? 'Boa tarde!' : 'Boa noite!';
+    const hourDecimal = hour + (now.getMinutes() / 60);
+    let title = 'Boa noite!';
+    let phase = 'night';
+    let iconName = 'moon.fill';
+
+    if (hour < 6) {
+      title = 'Boa madrugada!';
+      phase = 'dawn';
+    } else if (hourDecimal < 9.5) {
+      title = 'Boa manhã!';
+      phase = 'morning';
+      iconName = 'sun.max.fill';
+    } else if (hourDecimal < 12) {
+      title = 'Bom dia!';
+      phase = 'day';
+      iconName = 'sun.max.fill';
+    } else if (hourDecimal < 18) {
+      title = 'Boa tarde!';
+      phase = 'afternoon';
+      iconName = 'sun.max.fill';
+    }
+
+    greetingTitle.textContent = title;
+    const card = document.getElementById('greetingCard');
+    const chip = document.getElementById('dayPhaseChip');
+    const iconHost = document.getElementById('dayPhaseIcon');
+    if (card) card.dataset.phase = phase;
+    if (chip) chip.dataset.phase = phase;
+    if (iconHost) iconHost.innerHTML = dnIcon(iconName, 'dn-day-phase-symbol');
   }
 
   function pad(value, size = 2) {
@@ -312,6 +344,7 @@
       source: 'ia', source_record_id: sourceId || null,
       priority: Math.max(0, Math.min(10, Number(priority) || 0)),
       priority_reason: String(priorityReason || ''), area: String(area || ''),
+      icon_name: semanticTaskIcon(cleanTitle, area),
       due: String(due || ''), effort: String(effort || 'media'),
       duration_min: durationMin == null ? null : Number(durationMin),
       confidence: confidence == null ? null : Number(confidence)
@@ -351,7 +384,7 @@
 
   function timelineClassFor(id) {
     const value = String(id || '0').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return ['note-peach', 'note-blue', 'note-lilac'][value % 3];
+    return ['note-peach', 'note-blue', 'note-lilac', 'note-mint', 'note-sunset', 'note-aqua'][value % 6];
   }
 
   function timelineCardHtml(row) {
@@ -561,12 +594,12 @@
       realNotes.innerHTML = `
         <article class="note-card note-blue empty-note">
           <div class="note-meta">Supabase conectado</div>
-          <p>Ainda não há registros. Use “Registrar” ou o Atalho para criar o primeiro.</p>
+          <p>Ainda não há registros. Use “Adicionar” para criar o primeiro.</p>
         </article>`;
       return;
     }
 
-    const classes = ['note-peach', 'note-blue', 'note-lilac'];
+    const classes = ['note-peach', 'note-blue', 'note-lilac', 'note-mint', 'note-sunset', 'note-aqua'];
     realNotes.innerHTML = records.slice(0, 6).map((row, index) => `
       <article class="note-card ${classes[index % classes.length]}">
         <div class="note-meta">${escapeHtml(formatRecordDate(row.registrado_em))}<span>•••</span></div>
@@ -834,11 +867,50 @@
     return `Criada ${formatRecordDate(task.created_at)}`;
   }
 
+  const TASK_ICON_CHOICES = [
+    'list.bullet','cart.fill','bag.fill','fork.knife','message.fill','banknote.fill',
+    'house.fill','archivebox.fill','paperplane.fill','calendar','paintpalette.fill',
+    'pills.fill','bed.double.fill','receipt.fill','storefront.fill','key.fill',
+    'car.fill','book.fill','gift.fill','document.fill','lightbulb.fill','trash.fill',
+    'heart.fill','person.fill'
+  ].filter((name) => window.DN_SYMBOLS?.has?.(name));
+
+  function semanticTaskIcon(title = '', area = '') {
+    const text = `${title} ${area}`.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');
+    const has = (...words) => words.some((word) => text.includes(word));
+
+    if (has('comprar','compra','mercado','luva','areia','material','produto','estoque')) return 'cart.fill';
+    if (has('cozinha','louca','louça','comida','comer','almoco','almoço','jantar','cafe','café')) return 'fork.knife';
+    if (has('mensagem','whatsapp','responder','conversar','falar com','cliente','familia','família','amigo')) return 'message.fill';
+    if (has('pagar','aluguel','dinheiro','boleto','fatura','conta','receber','pix')) return 'banknote.fill';
+    if (has('organizar','arrumar','gaveta','armario','armário','caixa','guardar')) return 'archivebox.fill';
+    if (has('limpar','limpeza','quarto','casa','banheiro','sala')) return 'house.fill';
+    if (has('divulgar','postar','instagram','tiktok','anunciar','publicar')) return 'paperplane.fill';
+    if (has('consulta','remedio','remédio','medicamento','saude','saúde')) return 'pills.fill';
+    if (has('dormir','sono','descansar','cama')) return 'bed.double.fill';
+    if (has('contrato','documento','cpf','imobiliaria','imobiliária')) return 'document.fill';
+    if (has('marcar','agenda','horario','horário','amanha','amanhã')) return 'calendar';
+    if (has('pintar','tinta','cabelo','cor')) return 'paintpalette.fill';
+    if (has('chave','senha','acesso')) return 'key.fill';
+    if (has('carro','uber','transporte')) return 'car.fill';
+    if (has('livro','ler','estudar')) return 'book.fill';
+    if (has('presente','aniversario','aniversário')) return 'gift.fill';
+    if (has('lixo','jogar fora','descartar')) return 'trash.fill';
+    if (has('ideia','planejar','pensar')) return 'lightbulb.fill';
+    if (has('sair','caminhar','passear','rua','visitar')) return 'person.fill';
+    return 'list.bullet';
+  }
+
+  function taskIconName(task) {
+    const requested = String(task?.icon_name || '');
+    return window.DN_SYMBOLS?.has?.(requested) ? requested : semanticTaskIcon(task?.title, task?.area);
+  }
+
   function taskRowHtml(task) {
     const done = task.status === 'done';
     const started = task.status === 'started';
     const priority = Number.isFinite(Number(task.priority)) ? Math.max(0, Math.min(10, Number(task.priority))) : 5;
-    const iconName = done ? 'checkmark.circle.fill' : started ? 'clock.fill' : 'list.bullet';
+    const iconName = done ? 'checkmark.circle.fill' : started ? 'clock.fill' : taskIconName(task);
     return `
       <button class="task-row ${done ? 'done' : started ? 'running' : ''}" type="button" data-task-id="${escapeHtml(task.id)}">
         <span class="task-icon ${done ? 'task-green' : started ? 'task-blue' : priority >= 8 ? 'task-pink' : 'task-violet'}">
@@ -907,13 +979,29 @@
 
     taskDetailContent.innerHTML = `
       <div class="detail-kicker">TAREFA</div>
-      <h2>${escapeHtml(task.title)}</h2>
+      <div class="task-detail-title-row"><span class="task-detail-icon">${dnIcon(taskIconName(task), 'dn-task-symbol')}</span><h2>${escapeHtml(task.title)}</h2></div>
       <div class="detail-priority">Prioridade <strong>${escapeHtml(Number(task.priority ?? 5))}/10</strong>${task.priority_reason ? `<span>${escapeHtml(task.priority_reason)}</span>` : ''}</div>
       ${extra}
       <p class="detail-muted">Criada em ${escapeHtml(created)}</p>`;
     startTaskButton.hidden = task.status !== 'open';
     completeTaskButton.hidden = task.status !== 'started';
     taskDetailDialog.showModal();
+  }
+
+  function renderTaskIconPicker(task) {
+    if (!taskIconGrid) return;
+    const current = taskIconName(task);
+    taskIconGrid.innerHTML = TASK_ICON_CHOICES.map((name) => `
+      <button type="button" class="task-icon-choice ${name === current ? 'selected' : ''}" data-task-icon="${escapeHtml(name)}" aria-label="${escapeHtml(name)}">
+        ${dnIcon(name, 'dn-task-symbol')}
+      </button>`).join('');
+  }
+
+  function openTaskIconPicker() {
+    const task = tasks.find((item) => item.id === selectedTaskId);
+    if (!task || !taskIconDialog) return;
+    renderTaskIconPicker(task);
+    taskIconDialog.showModal();
   }
 
   // ---------- SESSÃO ----------
@@ -940,6 +1028,7 @@
 
   async function init() {
     updateDateAndGreeting();
+    setInterval(updateDateAndGreeting, 60000);
     renderHabits();
     renderTasks();
 
@@ -1154,7 +1243,7 @@
       await insertStructuredEvent(existing ? 'tarefa_editada' : 'tarefa_criada', {
         task_id: id,
         title,
-        ...(existing ? {} : { created_at: new Date().toISOString(), priority: 5, source: 'manual' })
+        ...(existing ? {} : { created_at: new Date().toISOString(), priority: 5, source: 'manual', icon_name: semanticTaskIcon(title, '') })
       });
       taskFormDialog.close();
       showToast(existing ? 'Tarefa atualizada' : 'Tarefa criada');
@@ -1169,6 +1258,25 @@
     if (!task) return;
     taskDetailDialog.close();
     openTaskForm(task);
+  });
+  changeTaskIconButton?.addEventListener('click', () => {
+    taskDetailDialog.close();
+    openTaskIconPicker();
+  });
+  closeTaskIconPicker?.addEventListener('click', () => taskIconDialog?.close());
+  taskIconGrid?.addEventListener('click', async (event) => {
+    const button = event.target.closest?.('[data-task-icon]');
+    if (!button) return;
+    const task = tasks.find((item) => item.id === selectedTaskId);
+    if (!task) return;
+    try {
+      await insertStructuredEvent('tarefa_editada', { task_id: task.id, icon_name: button.dataset.taskIcon });
+      taskIconDialog?.close();
+      showToast('Ícone atualizado');
+      await loadAppState();
+    } catch (error) {
+      showToast(`Erro: ${error.message}`);
+    }
   });
   startTaskButton.addEventListener('click', async () => {
     const task = tasks.find((item) => item.id === selectedTaskId);

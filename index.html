@@ -25,7 +25,6 @@
     <header class="topbar">
       <div class="brand-wrap">
         <h1 class="brand">Diário<br><span>Negro</span></h1>
-        <p class="tagline">Hoje é um bom dia<br>para continuar.</p>
       </div>
 
       <div class="top-actions" aria-label="Ações rápidas">
@@ -41,19 +40,15 @@
       </div>
     </header>
 
-    <section class="greeting-card glass-card">
-      <div class="sun-chip" aria-hidden="true">
-        <span data-dn-symbol="sun.max.fill"></span>
+    <section class="greeting-card glass-card" id="greetingCard" data-phase="afternoon">
+      <div class="sun-chip" id="dayPhaseChip" aria-hidden="true">
+        <span id="dayPhaseIcon" data-dn-symbol="sun.max.fill"></span>
       </div>
       <div class="greeting-copy">
         <div class="eyebrow" id="todayLabel">DOM, 18 DE OUT</div>
         <h2 id="greetingTitle">Boa tarde!</h2>
         <p>Como você está se sentindo hoje?</p>
       </div>
-      <button class="primary-btn" type="button" data-demo="register">
-        <span data-dn-symbol="plus"></span>
-        <span>Registrar</span>
-      </button>
     </section>
 
     <section class="section-block habits-section">
@@ -131,9 +126,10 @@
         <span>Linha do tempo</span>
       </button>
 
-      <button class="dock-plus" type="button" data-demo="register" aria-label="Registrar">
+      <button class="dock-plus" type="button" data-demo="register" aria-label="Adicionar informação">
         <span class="plus-led"></span>
         <span data-dn-symbol="plus"></span>
+        <span class="dock-plus-label">Adicionar</span>
       </button>
 
       <button class="dock-item" type="button">
@@ -289,6 +285,7 @@
       <div id="taskDetailContent"></div>
       <div class="sheet-actions stacked-actions">
         <button type="button" class="secondary-btn" id="editTaskButton">Editar</button>
+        <button type="button" class="secondary-btn" id="changeTaskIconButton">Alterar ícone</button>
         <button type="button" class="success-btn" id="startTaskButton">Iniciar tarefa</button>
         <button type="button" class="primary-btn" id="completeTaskButton">Concluir tarefa</button>
         <button type="button" class="ghost-danger-btn" id="deleteTaskButton">Excluir tarefa</button>
@@ -301,11 +298,22 @@
     <div class="demo-sheet manager-sheet">
       <div class="sheet-handle"></div>
       <div class="manager-heading">
-        <div><h2>Tarefas</h2><p class="sheet-copy">Abertas, em andamento e concluídas.</p></div>
+        <div><h2>Tarefas</h2></div>
         <button type="button" class="mini-add-btn" id="addTaskFromManager">+ Adicionar</button>
       </div>
       <div id="tasksManagerList" class="manager-list"></div>
       <button type="button" class="primary-btn sheet-button" id="closeTasksManager">Fechar</button>
+    </div>
+  </dialog>
+
+  <dialog id="taskIconDialog" class="demo-dialog">
+    <div class="demo-sheet icon-picker-sheet">
+      <div class="sheet-handle"></div>
+      <div class="manager-heading">
+        <div><h2>Ícone da tarefa</h2><p class="sheet-copy">Escolha um símbolo do banco do Diário Negro.</p></div>
+      </div>
+      <div id="taskIconGrid" class="task-icon-grid"></div>
+      <button type="button" class="primary-btn sheet-button" id="closeTaskIconPicker">Fechar</button>
     </div>
   </dialog>
 
@@ -330,17 +338,7 @@
   <script src="dn-ai.js"></script>
 </body>
 </html>
-="sheet-copy">Abertas, em andamento e concluídas.</p></div>
-        <button type="button" class="mini-add-btn" id="addTaskFromManager">+ Adicionar</button>
-      </div>
-      <div id="tasksManagerList" class="manager-list"></div>
-      <button type="button" class="primary-btn sheet-button" id="closeTasksManager">Fechar</button>
-    </div>
-  </dialog>
-
-  <dialog id="accountDialog" class="demo-dialog">
-    <div class="demo-sheet">
-      <div class="sheet-handle"></div>
+v class="sheet-handle"></div>
       <h2>Conta</h2>
       <p class="sheet-copy" id="accountEmail">Conectando…</p>
       <button type="button" class="secondary-btn sheet-button" id="logoutButton">Sair da conta</button>
