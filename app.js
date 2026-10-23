@@ -13,7 +13,7 @@
 
   const loginDialog = document.getElementById('loginDialog');
   const registerDialog = document.getElementById('registerDialog');
-  let accountDialog = document.getElementById('accountDialog');
+  const accountDialog = document.getElementById('accountDialog');
 
   const loginForm = document.getElementById('loginForm');
   const loginEmail = document.getElementById('loginEmail');
@@ -27,9 +27,9 @@
   const cancelRegister = document.getElementById('cancelRegister');
 
   const accountButton = document.getElementById('accountButton');
-  let accountEmail = document.getElementById('accountEmail');
-  let logoutButton = document.getElementById('logoutButton');
-  let closeAccount = document.getElementById('closeAccount');
+  const accountEmail = document.getElementById('accountEmail');
+  const logoutButton = document.getElementById('logoutButton');
+  const closeAccount = document.getElementById('closeAccount');
 
   const realNotes = document.getElementById('realNotes');
   const homeView = document.getElementById('homeView');
@@ -116,87 +116,6 @@
   let taskHistoryIds = new Set();
   let selectedHabitId = null;
   let selectedTaskId = null;
-
-  function cleanupLeakedAccountMarkup() {
-    const badExact = new Set(['Conta', 'Conectando…', 'Conectando...', 'Sair da conta']);
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const textVictims = [];
-
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-      const parent = node.parentElement;
-      if (!parent || parent.closest('dialog')) continue;
-      const text = String(node.textContent || '').trim();
-      if (!text) continue;
-      if (/v\s+class=["']sheet-handle["']|sheet-handle["']?>/i.test(text)) {
-        textVictims.push(node);
-      }
-    }
-
-    for (const node of textVictims) node.remove();
-
-    document.querySelectorAll('body h2, body p, body button').forEach((el) => {
-      if (el.closest('dialog')) return;
-      const text = String(el.textContent || '').trim();
-      if (badExact.has(text)) el.remove();
-    });
-
-    document.querySelectorAll('body > .sheet-handle, body > .sheet-copy, body > #accountEmail, body > #logoutButton, body > #closeAccount')
-      .forEach((el) => el.remove());
-  }
-
-  function ensureAccountDialog() {
-    cleanupLeakedAccountMarkup();
-    if (accountDialog && accountEmail && logoutButton && closeAccount) return;
-
-    document.getElementById('accountDialog')?.remove();
-
-    const dialog = document.createElement('dialog');
-    dialog.id = 'accountDialog';
-    dialog.className = 'demo-dialog auth-account-dialog';
-
-    const sheet = document.createElement('div');
-    sheet.className = 'demo-sheet account-sheet';
-
-    const handle = document.createElement('div');
-    handle.className = 'sheet-handle';
-    handle.setAttribute('aria-hidden', 'true');
-
-    const title = document.createElement('h2');
-    title.textContent = 'Conta';
-
-    const email = document.createElement('p');
-    email.className = 'sheet-copy';
-    email.id = 'accountEmail';
-    email.textContent = 'Conta conectada';
-
-    const logout = document.createElement('button');
-    logout.type = 'button';
-    logout.className = 'secondary-btn sheet-button';
-    logout.id = 'logoutButton';
-    logout.textContent = 'Sair da conta';
-
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.className = 'primary-btn sheet-button';
-    close.id = 'closeAccount';
-    close.textContent = 'Fechar';
-
-    sheet.append(handle, title, email, logout, close);
-    dialog.append(sheet);
-    document.body.append(dialog);
-
-    accountDialog = dialog;
-    accountEmail = email;
-    logoutButton = logout;
-    closeAccount = close;
-  }
-
-  cleanupLeakedAccountMarkup();
-  ensureAccountDialog();
-  requestAnimationFrame(cleanupLeakedAccountMarkup);
-  setTimeout(cleanupLeakedAccountMarkup, 250);
-  setTimeout(cleanupLeakedAccountMarkup, 1200);
 
   function showToast(message) {
     toast.textContent = message;
@@ -1103,7 +1022,7 @@
       return;
     }
     closeLogin();
-    if (accountEmail) accountEmail.textContent = session.user?.email || 'Conta conectada';
+    accountEmail.textContent = session.user?.email || 'Conta conectada';
     await Promise.all([loadRecords(), loadAppState()]);
   }
 
@@ -1130,7 +1049,7 @@
       session = newSession;
       if (session) {
         closeLogin();
-        if (accountEmail) accountEmail.textContent = session.user?.email || 'Conta conectada';
+        accountEmail.textContent = session.user?.email || 'Conta conectada';
         setTimeout(() => Promise.all([loadRecords(), loadAppState()]), 0);
       }
     });
@@ -1397,17 +1316,15 @@
   });
   closeTaskDetail.addEventListener('click', () => taskDetailDialog.close());
 
-  accountButton?.addEventListener('click', () => {
+  accountButton.addEventListener('click', () => {
     if (!session) return openLogin();
-    ensureAccountDialog();
-    if (accountEmail) accountEmail.textContent = session.user?.email || 'Conta conectada';
-    accountDialog?.showModal();
+    accountDialog.showModal();
   });
-  closeAccount?.addEventListener('click', () => accountDialog?.close());
-  logoutButton?.addEventListener('click', async () => {
+  closeAccount.addEventListener('click', () => accountDialog.close());
+  logoutButton.addEventListener('click', async () => {
     await client.auth.signOut();
     session = null;
-    accountDialog?.close();
+    accountDialog.close();
     habits = [];
     tasks = [];
     renderHabits();

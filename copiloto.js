@@ -580,6 +580,7 @@
 
   let microcopyIndex = Math.floor(Math.random() * COPILOT_MICROCOPY.length);
   let motionTimer = null;
+  let microcopyTimer = null;
 
   function setCopilotMicrocopy(text = '') {
     const el = $('#dnCopilotMicrocopy');
@@ -591,6 +592,16 @@
     }, 160);
   }
 
+  function scheduleMicrocopy() {
+    clearTimeout(microcopyTimer);
+    const delay = 14000 + Math.random() * 14000;
+    microcopyTimer = setTimeout(() => {
+      microcopyIndex = (microcopyIndex + 1 + Math.floor(Math.random() * 2)) % COPILOT_MICROCOPY.length;
+      setCopilotMicrocopy();
+      scheduleMicrocopy();
+    }, delay);
+  }
+
   function scheduleCopilotMotion() {
     clearTimeout(motionTimer);
     const button = $('#dnChooseNow');
@@ -600,27 +611,16 @@
       return;
     }
     const intensity = button.dataset.intensity || 'medium';
-    const ranges = intensity === 'high' ? [650, 1700] : intensity === 'low' ? [1700, 3800] : [900, 2600];
+    const ranges = intensity === 'high' ? [2800, 5200] : intensity === 'low' ? [6500, 11000] : [4200, 8200];
     const delay = ranges[0] + Math.random() * (ranges[1] - ranges[0]);
     motionTimer = setTimeout(() => {
       const moves = intensity === 'high'
-        ? ['dn-motion-glow','dn-motion-wiggle','dn-motion-breathe','dn-motion-nudge','dn-motion-hop','dn-motion-glow']
-        : intensity === 'low'
-          ? ['dn-motion-breathe','dn-motion-glow','dn-motion-nudge']
-          : ['dn-motion-breathe','dn-motion-glow','dn-motion-wiggle','dn-motion-nudge'];
-      const durations = {
-        'dn-motion-breathe': 2700,
-        'dn-motion-nudge': 1900,
-        'dn-motion-hop': 1450,
-        'dn-motion-wiggle': 2400,
-        'dn-motion-glow': 2900
-      };
+        ? ['dn-motion-nudge','dn-motion-glow','dn-motion-hop','dn-motion-wiggle']
+        : ['dn-motion-nudge','dn-motion-glow','dn-motion-breathe'];
       const move = moves[Math.floor(Math.random() * moves.length)];
       button.classList.add(move);
-      setTimeout(() => {
-        button.classList.remove(move);
-        scheduleCopilotMotion();
-      }, durations[move] || 2200);
+      setTimeout(() => button.classList.remove(move), move === 'dn-motion-glow' ? 1500 : 900);
+      scheduleCopilotMotion();
     }, delay);
   }
 
@@ -659,7 +659,7 @@
       const title = box?.dataset.title || 'uma tarefa';
       const priority = Number(box?.dataset.priority || 0);
       if (id && window.DN_APP_API?.completeTask) await window.DN_APP_API.completeTask(id);
-      box.innerHTML = `<div class="dn-next-copy dn-next-done-copy"><span class="dn-done-icon">${icon('checkmark.circle.fill')}</span><div><strong>Feito.</strong><span>Quando quiser, escolho a próxima.</span></div></div>`; setCopilotIntensity(3);
+      box.innerHTML = `<div class="dn-next-copy dn-next-done-copy"><span class="dn-done-icon">${icon('checkmark.circle.fill')}</span><div><strong>Feito.</strong><span>Quando quiser, escolho a próxima.</span></div></div>`; setCopilotMicrocopy('Boa. Uma coisa a menos na sua cabeça.'); setCopilotIntensity(3);
       if (priority >= 7) setTimeout(() => maybePromptMood({ reason: 'tarefa_importante_concluida', context: title }), 450);
     }
     if (event.target.closest('[data-next-other]')) {
@@ -791,6 +791,7 @@
     client = window.DN_APP_API?.getClient?.() || sdk.createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
     await Promise.allSettled([loadLearnedContext(), loadRecentEmotions()]);
     setCopilotMicrocopy();
+    scheduleMicrocopy();
     scheduleCopilotMotion();
     setTimeout(() => maybePromptMood({ reason: 'tempo_sem_checkin' }), 1200);
   }
