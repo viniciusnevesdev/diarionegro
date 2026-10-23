@@ -24,8 +24,18 @@
   --radius-sm: 18px;
   --control-radius: 999px;
 
-  --page-x: 16px;
-  --gap: 12px;
+  /* Espaçamento */
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+
+  /* Layout */
+  --page-x: var(--space-lg);
+  --gap: var(--space-md);
   --dock-h: 62px;
 
   --type-display: 34px;
@@ -36,6 +46,6 @@
 
 @media (max-width: 370px) {
   :root {
-    --page-x: 12px;
+    --page-x: var(--space-md);
   }
 }
