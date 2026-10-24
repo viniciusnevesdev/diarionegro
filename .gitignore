@@ -9,3 +9,7 @@ DIAGNOSTICO_*
 # Checkpoints e setups locais
 CHECKPOINT_*
 SETUP_*
+.DS_Store
+.bbb-backups/
+tests/__pycache__/
+*.pyc
