@@ -13,6 +13,8 @@
 
   let client = null;
   let learnedRules = [];
+  let learnedMemoryIds = [];
+  let learnedMemories = [];
   let recentEmotions = [];
   let activeSession = readJson(SESSION_KEY, null);
   let lastResult = null;
@@ -72,6 +74,17 @@
     if (!client) return;
     const { data: auth } = await client.auth.getSession();
     if (!auth?.session) return;
+    if (window.DN_MEMORY?.contextRules) {
+      try {
+        const memories = await window.DN_MEMORY.contextRules({ limit: MAX_RULES }, client);
+        learnedRules = memories.map((memory) => String(memory.texto));
+        learnedMemoryIds = memories.map((memory) => memory.id);
+        learnedMemories = memories.map((memory) => ({ id: memory.id, texto: memory.texto, categoria: memory.categoria, origem: memory.origem }));
+        return;
+      } catch (error) {
+        if (!window.DN_MEMORY.isUnavailableError?.(error)) console.warn('Memória estruturada indisponível; usando fallback legado.', error);
+      }
+    }
     const { data } = await client.from('registros')
       .select('registrado_em,texto_original,entrada')
       .in('entrada', ['memoria_ia', 'correcao_ia'])
@@ -85,6 +98,33 @@
       if (rules.length >= MAX_RULES) break;
     }
     learnedRules = [...new Set(rules)];
+    learnedMemoryIds = [];
+    learnedMemories = [];
+  }
+
+  async function saveMemoryWithFallback(input, options = {}) {
+    if (window.DN_MEMORY?.create) {
+      try { return await window.DN_MEMORY.create(input, options, client); }
+      catch (error) {
+        if (!window.DN_MEMORY.isUnavailableError?.(error)) throw error;
+      }
+    }
+    if (input.origem === 'inferencia_ia_nao_confirmada') return null;
+    await recordEvent('memoria_ia', {
+      texto: input.texto, tipo: input.tipo, created_at: new Date().toISOString(),
+      source: input.origem || 'usuario', pending_confirmation: input.origem === 'inferencia_ia_nao_confirmada'
+    });
+    return null;
+  }
+
+  async function rememberCorrectionWithFallback(text, details = {}) {
+    if (window.DN_MEMORY?.createCorrection) {
+      try { return await window.DN_MEMORY.createCorrection(text, details, client); }
+      catch (error) {
+        if (!window.DN_MEMORY.isUnavailableError?.(error)) throw error;
+      }
+    }
+    return null;
   }
 
   async function loadRecentEmotions() {
@@ -399,6 +439,8 @@
         if (error) throw error;
       }
       const result = await invokeCopilot({ modo: 'interpretar', texto: text, ...interpretationContext() });
+      result.__usedMemories = learnedMemories.map((memory) => ({ ...memory }));
+      await window.DN_MEMORY?.recordUses?.(learnedMemoryIds, sourceRecord.id, 'interpretar', { source: 'copiloto_texto' }, client).catch(() => {});
       await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: false }, client);
       await processInterpretation(result, sourceRecord?.id || uid('src'));
       await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: true }, client);
@@ -422,7 +464,10 @@
       await loadLearnedContext();
       const note = String($('#dnPhotoNote')?.value || '').trim();
       const result = await invokeCopilot({ modo: 'interpretar', texto: note, imagem_data_url: prepared.dataUrl, ...interpretationContext() });
-      await processInterpretation(result, uid('foto'));
+      result.__usedMemories = learnedMemories.map((memory) => ({ ...memory }));
+      const photoSourceId = uid('foto');
+      await window.DN_MEMORY?.recordUses?.(learnedMemoryIds, photoSourceId, 'interpretar', { source: 'copiloto_foto' }, client).catch(() => {});
+      await processInterpretation(result, photoSourceId);
       renderResult(result);
       resetInputOnNextOpen = true;
       setStatus('Foto analisada. Se for uma organização, vou mostrar uma etapa por vez.', 'ok');
@@ -432,6 +477,7 @@
 
   async function processInterpretation(result, sourceId) {
     lastResult = result;
+    result.__sourceId = sourceId;
     result.__taskActionRefs = await window.DN_INTERPRETATIONS?.applyTaskActions?.(result) || [];
     const taskRefs = [];
     for (let i = 0; i < (result.tarefas || []).length; i++) {
@@ -466,6 +512,15 @@
       try { await recordEvent('sessao_guiada_criada', activeSession); } catch {}
       renderActiveSession();
     }
+    for (const suggestion of result.memorias_sugeridas || []) {
+      if (Number(suggestion.confianca || 0) < .7 || !suggestion.texto) continue;
+      await saveMemoryWithFallback({
+        texto: suggestion.texto, tipo: suggestion.tipo === 'local_objeto' ? 'objeto_lugar' : suggestion.tipo === 'regra' ? 'regra_pessoal' : suggestion.tipo === 'contexto_pessoal' ? 'contexto_vida' : suggestion.tipo,
+        origem: 'inferencia_ia_nao_confirmada', status: 'aguardando_confirmacao', ativa: false,
+        confirmed_by_user: false, confianca: suggestion.confianca, source_record_id: sourceId,
+        source_type: 'interpretacao_copiloto', source_label: 'Sugestão da IA', source_excerpt: suggestion.texto
+      }, { source: { record_id: sourceId, source_type: 'interpretacao_copiloto', source_label: 'Sugestão da IA', source_excerpt: suggestion.texto, relation_type: 'origem' } });
+    }
     await loadRecentEmotions();
   }
 
@@ -496,12 +551,15 @@
         <button type="button" class="dn-mini-edit" data-correct-emotion="${i}">${icon('pencil')}<span>Corrigir</span></button>
       </article>`).join('');
     const session = result.sessao?.ativa ? `<div class="dn-result-session"><span>${icon('house.fill')}</span><div><b>${esc(result.sessao.titulo || 'Sessão guiada')}</b><small>${result.sessao.passos?.length || 0} etapas temporárias · uma por vez</small></div><button type="button" data-focus-session>Ver primeira etapa</button></div>` : '';
-    const memories = (result.memorias_sugeridas || []).filter((m) => m.confianca >= .7).map((m, i) => `<button class="dn-memory-suggestion" type="button" data-save-memory="${i}">${icon('brain.head.profile.fill')}<span><b>Ensinar isso</b><small>${esc(m.texto)}</small></span></button>`).join('');
-    box.innerHTML = `<div class="dn-result-summary"><span class="dn-kicker">ENTENDI ASSIM</span><p>${esc(result.resumo || '')}</p>${category ? `<small>${esc(category)}</small>` : ''}</div>${events}${taskActions}${session}${tasks}${emotions}${memories}`;
+    const memories = (result.memorias_sugeridas || []).map((m, originalIndex) => ({ m, originalIndex })).filter(({ m }) => m.confianca >= .7).map(({ m, originalIndex }) => `<button class="dn-memory-suggestion" type="button" data-save-memory="${originalIndex}">${icon('brain.head.profile.fill')}<span><b>Confirmar memória</b><small>${esc(m.texto)}</small></span></button>`).join('');
+    const used = result.__usedMemories?.length ? `<details class="dn-used-context"><summary>O que foi usado nesta resposta?</summary><p>Estas memórias foram fornecidas ao modelo como contexto. Isso não expõe raciocínio interno.</p>${result.__usedMemories.map((memory) => `<button type="button" data-open-used-memory="${esc(memory.id)}"><b>${esc(memory.texto)}</b><small>${esc(memory.categoria || 'Memória pessoal')}</small></button>`).join('')}<div><span>Também usei as regras estáveis do contexto-base e o registro atual.</span></div></details>` : '';
+    box.innerHTML = `<div class="dn-result-summary"><span class="dn-kicker">ENTENDI ASSIM</span><p>${esc(result.resumo || '')}</p>${category ? `<small>${esc(category)}</small>` : ''}</div>${events}${taskActions}${session}${tasks}${emotions}${memories}${used}`;
     box.hidden = false;
   }
 
   async function handleResultClick(event) {
+    const usedMemory = event.target.closest('[data-open-used-memory]');
+    if (usedMemory) return window.DN_MEMORY?.openDetail?.(usedMemory.dataset.openUsedMemory);
     const task = event.target.closest('[data-correct-task]');
     if (task) return openTaskCorrection(Number(task.dataset.taskIndex), task.dataset.correctTask);
     const emotion = event.target.closest('[data-correct-emotion]');
@@ -510,7 +568,16 @@
     if (mem && lastResult) {
       const m = lastResult.memorias_sugeridas?.[Number(mem.dataset.saveMemory)];
       if (!m) return;
-      await recordEvent('memoria_ia', { texto: m.texto, tipo: m.tipo, created_at: new Date().toISOString(), source: 'sugestao_ia_confirmada' });
+      const saved = await saveMemoryWithFallback({
+        texto: m.texto, tipo: m.tipo === 'local_objeto' ? 'objeto_lugar' : m.tipo === 'regra' ? 'regra_pessoal' : m.tipo === 'contexto_pessoal' ? 'contexto_vida' : m.tipo,
+        origem: 'inferencia_ia_confirmada', status: 'ativa', ativa: true, confirmed_by_user: true,
+        confirmed_at: new Date().toISOString(), confianca: m.confianca, source_record_id: lastResult.__sourceId,
+        source_type: 'interpretacao_copiloto', source_label: 'Inferência confirmada', source_excerpt: m.texto
+      }, { source: { record_id: lastResult.__sourceId, source_type: 'interpretacao_copiloto', source_label: 'Confirmação do usuário', source_excerpt: m.texto, relation_type: 'confirmacao' } });
+      if (saved?.duplicate && saved.memory?.id) await window.DN_MEMORY.update(saved.memory.id, {
+        origem: 'inferencia_ia_confirmada', status: 'ativa', ativa: true, confirmed_by_user: true,
+        confirmed_at: new Date().toISOString()
+      }, 'confirmacao_usuario', client);
       await loadLearnedContext(); mem.disabled = true; mem.querySelector('b').textContent = 'Aprendido'; return;
     }
     if (event.target.closest('[data-focus-session]')) {
@@ -579,15 +646,18 @@
           await window.DN_APP_API.editTask(currentCorrection.taskId, { title, priority, corrected_by_user: true });
         }
         await recordEvent('correcao_ia', { kind: 'task', before: currentCorrection.before, after, remember, lesson, corrected_at: new Date().toISOString() });
+        if (remember && lesson) await rememberCorrectionWithFallback(lesson, { tipo: 'regra_pessoal', categoria: 'Correções', correction_reason: 'Correção explícita de tarefa' });
       } else if (currentCorrection.kind === 'emotion') {
         const after = { nome: $('#dnCorrectEmotionName').value.trim(), intensidade: Number($('#dnEmotionIntensity').value), relevancia: Number($('#dnEmotionRelevance').value) };
         const lesson = remember ? (writtenLesson || fallbackLesson('emotion', currentCorrection.before, after)) : writtenLesson;
         await recordEvent('emocao_corrigida', { emotion_id: currentCorrection.before.__emotionId || uid('emc'), before: currentCorrection.before, ...after, corrected_at: new Date().toISOString() });
         await recordEvent('correcao_ia', { kind: 'emotion', before: currentCorrection.before, after, remember, lesson, corrected_at: new Date().toISOString() });
+        if (remember && lesson) await rememberCorrectionWithFallback(lesson, { tipo: 'regra_pessoal', categoria: 'Correções', correction_reason: 'Correção explícita de emoção' });
       } else if (currentCorrection.kind === 'session') {
         const after = { skipped: true };
         const lesson = remember ? (writtenLesson || fallbackLesson('session', currentCorrection.before, after)) : writtenLesson;
         await recordEvent('correcao_ia', { kind: 'session_step', before: currentCorrection.before, after, remember, lesson, corrected_at: new Date().toISOString() });
+        if (remember && lesson) await rememberCorrectionWithFallback(lesson, { tipo: 'regra_pessoal', categoria: 'Correções', correction_reason: 'Correção explícita de sessão' });
         advanceSession();
       }
       await loadLearnedContext(); await loadRecentEmotions();
@@ -599,7 +669,15 @@
   async function saveTeaching() {
     const text = $('#dnTeachText').value.trim(); if (!text) return setStatus('Escreva o que eu devo aprender.', 'warn');
     try {
-      await recordEvent('memoria_ia', { texto: text, tipo: $('#dnTeachType').value, created_at: new Date().toISOString(), source: 'usuario' });
+      const rawType = $('#dnTeachType').value;
+      const type = rawType === 'local_objeto' ? 'objeto_lugar' : rawType === 'regra' ? 'regra_pessoal' : rawType === 'contexto_pessoal' ? 'contexto_vida' : rawType;
+      if (window.DN_MEMORY?.createExplicit) {
+        try { await window.DN_MEMORY.createExplicit(text, { tipo: type, categoria: 'Ensinado por você' }, client); }
+        catch (error) {
+          if (!window.DN_MEMORY.isUnavailableError?.(error)) throw error;
+          await recordEvent('memoria_ia', { texto: text, tipo: rawType, created_at: new Date().toISOString(), source: 'usuario' });
+        }
+      } else await recordEvent('memoria_ia', { texto: text, tipo: rawType, created_at: new Date().toISOString(), source: 'usuario' });
       $('#dnTeachText').value = ''; await loadLearnedContext(); setStatus('Aprendido. Vou usar isso nas próximas interpretações.', 'ok');
     } catch (error) { setStatus(error?.message || String(error), 'error'); }
   }

@@ -315,6 +315,26 @@
   };
   window.DN_APP_API.getTasks = () => tasks.map((item) => ({ ...item }));
   window.DN_APP_API.reloadState = loadAppState;
+  window.DN_APP_API.openRecord = async (recordIdValue) => {
+    const recordId = String(recordIdValue || '').trim();
+    if (!recordId || !session) return false;
+    showPage('timeline');
+    if (!timelineInitialLoaded) await loadTimelineInitial();
+    let card = timelineList.querySelector(`[data-record-id="${CSS.escape(recordId)}"]`);
+    if (!card) {
+      const { data, error } = await client.from('registros')
+        .select('id, registrado_em, texto_original, origem, entrada')
+        .eq('id', recordId).maybeSingle();
+      if (error) throw error;
+      if (!data || deletedRecordIds.has(recordId)) return false;
+      timelineList.insertAdjacentHTML('afterbegin', timelineCardHtml(data));
+      card = timelineList.querySelector(`[data-record-id="${CSS.escape(recordId)}"]`);
+    }
+    card?.classList.add('timeline-card-highlight');
+    card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => card?.classList.remove('timeline-card-highlight'), 2400);
+    return Boolean(card);
+  };
 
   function requireExistingTask(taskIdValue, { allowDone = false } = {}) {
     const id = String(taskIdValue || '').trim();
@@ -1143,6 +1163,9 @@
   timelineNavButton.addEventListener('click', () => showPage('timeline'));
   openTimelineFromNotes.addEventListener('click', () => showPage('timeline'));
   timelineRefresh.addEventListener('click', () => refreshTimelineNew({ scrollToPresent: true }));
+  window.addEventListener('dn:open-record', (event) => {
+    window.DN_APP_API.openRecord(event.detail?.recordId).catch((error) => showToast(`Erro: ${error.message}`));
+  });
 
   habitGrid.addEventListener('click', (event) => {
     const add = event.target.closest('[data-add-habit]');
