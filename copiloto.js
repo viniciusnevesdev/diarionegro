@@ -373,6 +373,14 @@
     return data;
   }
 
+  function interpretationContext() {
+    return window.DN_INTERPRETATIONS?.requestContext?.() || {
+      tarefas: [],
+      agora: new Date().toISOString(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+    };
+  }
+
   async function analyzeText(textOverride = '', inputType = 'texto') {
     const text = String(textOverride || $('#dnTextInput')?.value || '').trim();
     if (!text) return setStatus('Escreva ou fale alguma coisa primeiro.', 'warn');
@@ -390,8 +398,10 @@
         const { error } = await client.from('registros').insert(sourceRecord);
         if (error) throw error;
       }
-      const result = await invokeCopilot({ modo: 'interpretar', texto: text });
+      const result = await invokeCopilot({ modo: 'interpretar', texto: text, ...interpretationContext() });
+      await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: false }, client);
       await processInterpretation(result, sourceRecord?.id || uid('src'));
+      await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: true }, client);
       renderResult(result);
       resetInputOnNextOpen = true;
       setStatus('Interpretação concluída.', 'ok');
@@ -411,7 +421,7 @@
       setBusy(button, true, 'Interpretando…');
       await loadLearnedContext();
       const note = String($('#dnPhotoNote')?.value || '').trim();
-      const result = await invokeCopilot({ modo: 'interpretar', texto: note, imagem_data_url: prepared.dataUrl });
+      const result = await invokeCopilot({ modo: 'interpretar', texto: note, imagem_data_url: prepared.dataUrl, ...interpretationContext() });
       await processInterpretation(result, uid('foto'));
       renderResult(result);
       resetInputOnNextOpen = true;
@@ -422,6 +432,7 @@
 
   async function processInterpretation(result, sourceId) {
     lastResult = result;
+    result.__taskActionRefs = await window.DN_INTERPRETATIONS?.applyTaskActions?.(result) || [];
     const taskRefs = [];
     for (let i = 0; i < (result.tarefas || []).length; i++) {
       const t = result.tarefas[i];
@@ -461,6 +472,17 @@
   function renderResult(result) {
     const box = $('#dnInterpretationResult'); if (!box) return;
     const taskRefByIndex = new Map((result.__taskRefs || []).map((x) => [x.index, x.taskId]));
+    const category = [result.categoria, result.subcategoria].filter(Boolean).join(' › ');
+    const events = (result.eventos || []).map((event) => `
+      <article class="dn-result-card dn-result-event">
+        <div class="dn-result-card-icon">${icon('clock.fill')}</div>
+        <div class="dn-result-main"><div class="dn-result-top"><span>${esc([event.categoria, event.subcategoria].filter(Boolean).join(' › ') || 'Evento')}</span><b>${esc(event.estado || 'ocorreu')}</b></div><strong>${esc(event.nome)}</strong><p>${esc([event.momento, event.detalhes].filter(Boolean).join(' · '))}</p></div>
+      </article>`).join('');
+    const taskActions = (result.acoes_tarefas || []).map((action) => {
+      const applied = (result.__taskActionRefs || []).find((item) => item.taskId === action.task_id && item.action === action.acao)?.applied;
+      const label = action.acao === 'concluir' ? 'Tarefa concluída' : action.acao === 'iniciar' ? 'Tarefa iniciada' : 'Tarefa atualizada';
+      return `<article class="dn-result-card dn-result-task-action"><div class="dn-result-card-icon">${icon(applied ? 'checkmark.circle.fill' : 'exclamationmark.circle.fill')}</div><div class="dn-result-main"><div class="dn-result-top"><span>Ação em tarefa existente</span><b>${applied ? 'aplicada' : 'não aplicada'}</b></div><strong>${esc(label)}: ${esc(action.titulo_referencia)}</strong><p>${esc(action.evidencia || '')}</p></div></article>`;
+    }).join('');
     const tasks = (result.tarefas || []).map((t, i) => `
       <article class="dn-result-card dn-result-task">
         <div class="dn-result-card-icon">${icon('list.bullet')}</div>
@@ -475,7 +497,7 @@
       </article>`).join('');
     const session = result.sessao?.ativa ? `<div class="dn-result-session"><span>${icon('house.fill')}</span><div><b>${esc(result.sessao.titulo || 'Sessão guiada')}</b><small>${result.sessao.passos?.length || 0} etapas temporárias · uma por vez</small></div><button type="button" data-focus-session>Ver primeira etapa</button></div>` : '';
     const memories = (result.memorias_sugeridas || []).filter((m) => m.confianca >= .7).map((m, i) => `<button class="dn-memory-suggestion" type="button" data-save-memory="${i}">${icon('brain.head.profile.fill')}<span><b>Ensinar isso</b><small>${esc(m.texto)}</small></span></button>`).join('');
-    box.innerHTML = `<div class="dn-result-summary"><span class="dn-kicker">ENTENDI ASSIM</span><p>${esc(result.resumo || '')}</p></div>${session}${tasks}${emotions}${memories}`;
+    box.innerHTML = `<div class="dn-result-summary"><span class="dn-kicker">ENTENDI ASSIM</span><p>${esc(result.resumo || '')}</p>${category ? `<small>${esc(category)}</small>` : ''}</div>${events}${taskActions}${session}${tasks}${emotions}${memories}`;
     box.hidden = false;
   }
 

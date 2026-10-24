@@ -60,14 +60,45 @@ const emotionSchema = {
   required: ["nome","intensidade","valencia","contexto","relevancia","confianca"]
 };
 
+const eventSchema = {
+  type: "object", additionalProperties: false,
+  properties: {
+    tipo: { type: "string", enum: ["atividade","saude","medicamento","compra","social","trabalho","deslocamento","compromisso","outro"] },
+    nome: { type: "string" },
+    estado: { type: "string", enum: ["ocorreu","iniciado","concluído","tomado","comprado","agendado","cancelado"] },
+    categoria: { type: "string" },
+    subcategoria: { type: "string" },
+    momento: { type: "string" },
+    detalhes: { type: "string" },
+    confianca: { type: "number", minimum: 0, maximum: 1 }
+  },
+  required: ["tipo","nome","estado","categoria","subcategoria","momento","detalhes","confianca"]
+};
+
+const taskActionSchema = {
+  type: "object", additionalProperties: false,
+  properties: {
+    acao: { type: "string", enum: ["iniciar","concluir","editar"] },
+    task_id: { type: "string" },
+    titulo_referencia: { type: "string" },
+    novo_titulo: { type: "string" },
+    evidencia: { type: "string" },
+    confianca: { type: "number", minimum: 0, maximum: 1 }
+  },
+  required: ["acao","task_id","titulo_referencia","novo_titulo","evidencia","confianca"]
+};
+
 const interpretSchema = {
   type: "object", additionalProperties: false,
   properties: {
     resumo: { type: "string" },
     intencao: { type: "string", enum: ["registro","tarefas","sessao_guiada","emocao","misto"] },
     categoria: { type: "string" },
+    subcategoria: { type: "string" },
     pessoas: { type: "array", items: { type: "string" } },
     tags: { type: "array", items: { type: "string" } },
+    eventos: { type: "array", items: eventSchema },
+    acoes_tarefas: { type: "array", items: taskActionSchema },
     tarefas: { type: "array", items: taskSchema },
     emocoes: { type: "array", items: emotionSchema },
     sessao: {
@@ -104,7 +135,7 @@ const interpretSchema = {
       }
     }
   },
-  required: ["resumo","intencao","categoria","pessoas","tags","tarefas","emocoes","sessao","memorias_sugeridas"]
+  required: ["resumo","intencao","categoria","subcategoria","pessoas","tags","eventos","acoes_tarefas","tarefas","emocoes","sessao","memorias_sugeridas"]
 };
 
 const decideSchema = {
@@ -151,8 +182,14 @@ Deno.serve(async (req) => {
       instruction += `\nEscolha UMA única próxima ação plausível agora. Não escolha mecanicamente a maior nota: considere impacto, bloqueios e emoções recentes. Se uma tarefa grande for escolhida, primeiro_passo deve ser uma microação concreta. Se não houver tarefa adequada, uma ação de autocuidado/social só pode ser sugerida se o contexto a sustentar. Use task_id exatamente como recebido quando escolher uma tarefa existente.`;
       userText = `AGORA: ${String(body?.agora || "")}\n\nTAREFAS ATUAIS:\n${JSON.stringify(tasks)}\n\nEMOÇÕES/ESTADOS RECENTES (com horário):\n${JSON.stringify(emotions)}\n\nEscolha o que fazer agora.`;
     } else {
-      instruction += `\nAo interpretar:\n- Uma entrada pode conter ZERO, UMA ou VÁRIAS tarefas; separe-as.\n- Não transforme vontade/ideia/sentimento em obrigação sem sustentação.\n- Se houver foto de ambiente bagunçado, sessao.ativa=true e crie passos temporários em ordem; mostre ações pequenas. As tarefas permanentes ficam em tarefas[].\n- Se houver print de conversa, identifique pendências reais, compromissos ou respostas necessárias sem presumir demais.\n- Emoções explícitas devem entrar em emocoes[]. Use intensidade=-1 quando não for possível estimar com segurança.\n- Sugira memória apenas quando a entrada realmente ensina uma regra reutilizável sobre Vinícius, objeto, lugar ou preferência.\n- prioridade 10 é reservada para impacto/urgência realmente altos. Explique o motivo em uma frase curta.`;
+      const tasks = Array.isArray(body?.tarefas)
+        ? body.tarefas.slice(0, 200).filter((task: any) => task && typeof task.id === "string" && task.id.trim())
+        : [];
+      const now = String(body?.agora || "");
+      const timezone = String(body?.timezone || "UTC");
+      instruction += `\nAo interpretar:\n- Uma entrada pode conter ZERO, UMA ou VÁRIAS tarefas; separe-as.\n- Não transforme vontade/ideia/sentimento em obrigação sem sustentação.\n- categoria é a área ampla e subcategoria é o recorte útil, sem criar uma taxonomia rígida. Exemplo: Rotina > Cuidado pessoal.\n- Registre acontecimentos da vida em eventos[], mesmo quando não forem tarefas. “comecei a tomar banho” vira Banho/iniciado; “terminei o banho” vira Banho/concluído.\n- Use momento para preservar a expressão temporal do usuário ou um ISO quando ela puder ser determinada com segurança usando AGORA e TIMEZONE.\n- acoes_tarefas[] só pode referenciar IDs presentes em TAREFAS ABERTAS. Copie o ID exatamente; jamais invente ou altere um ID.\n- Só proponha concluir/iniciar/editar uma tarefa existente com evidência inequívoca e confiança alta. Menção vaga ou mera semelhança não basta.\n- Se a entrada informa que uma tarefa existente já aconteceu, use acoes_tarefas[] e NÃO replique essa pendência em tarefas[].\n- tarefas[] contém apenas pendências realmente novas. Acontecimentos concluídos e rotinas sem pendência não viram tarefas.\n- Se houver foto de ambiente bagunçado, sessao.ativa=true e crie passos temporários em ordem; mostre ações pequenas. As tarefas permanentes ficam em tarefas[].\n- Se houver print de conversa, identifique pendências reais, compromissos ou respostas necessárias sem presumir demais.\n- Emoções explícitas devem entrar em emocoes[]. Use intensidade=-1 quando não for possível estimar com segurança.\n- Sugira memória apenas quando a entrada realmente ensina uma regra reutilizável sobre Vinícius, objeto, lugar ou preferência.\n- prioridade 10 é reservada para impacto/urgência realmente altos. Explique o motivo em uma frase curta.`;
       if (!userText) userText = "Analise esta entrada visual e transforme-a em contexto, tarefas permanentes, emoções e/ou sessão guiada conforme apropriado.";
+      userText = `ENTRADA DO USUÁRIO:\n${userText}\n\nAGORA: ${now}\nTIMEZONE: ${timezone}\n\nTAREFAS ABERTAS (única fonte válida de task_id):\n${JSON.stringify(tasks)}`;
     }
 
     const content: any[] = [{ type: "input_text", text: userText }];

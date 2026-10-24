@@ -1,6 +1,12 @@
 # Ativar o Copiloto v0.8
 
-A interface funciona após instalar o patch, mas as funções de IA exigem publicar duas Supabase Edge Functions:
+A interface funciona após instalar o patch, mas a v0.8.1 exige aplicar primeiro a migration local:
+
+- `supabase/migrations/20261024140000_create_interpretacoes.sql`
+
+Ela cria `public.interpretacoes`, habilita RLS e libera apenas `select`, `insert` e `update` das linhas do próprio usuário autenticado. Não exponha a tabela antes de aplicar essa proteção.
+
+Depois da migration, publique as duas Supabase Edge Functions:
 
 - `copiloto`
 - `transcrever-audio`
@@ -22,3 +28,7 @@ Depois da publicação, testes mínimos:
 5. Voz: gravar uma frase e confirmar transcrição + interpretação.
 
 6. Check-in: conclua uma tarefa 7/10+ ou sessão guiada; deve oferecer check-in simples. 'Ignorar' não deve gerar emoção.
+
+7. Persistência: interprete um registro na linha do tempo, recarregue a página e confirme que aparece “Ver interpretação” sem uma nova chamada à IA.
+8. Tarefa existente: com “Pegar receitas no médico” aberta, registre “Hoje à tarde, depois de pegar as receitas com o médico, eu fiz a aplicação de testosterona.” Confirme a conclusão da tarefa pelo ID existente, o evento de aplicação e a ausência de tarefa duplicada.
+9. Evento: registre “comecei a tomar banho” e confirme `Rotina > Cuidado pessoal`, evento `Banho` e estado `iniciado`, sem tarefa nova.

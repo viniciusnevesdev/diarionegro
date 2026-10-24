@@ -316,6 +316,14 @@
   window.DN_APP_API.getTasks = () => tasks.map((item) => ({ ...item }));
   window.DN_APP_API.reloadState = loadAppState;
 
+  function requireExistingTask(taskIdValue, { allowDone = false } = {}) {
+    const id = String(taskIdValue || '').trim();
+    const task = tasks.find((item) => item.id === id && !item.deleted);
+    if (!id || !task) throw new Error('A tarefa informada não existe no estado atual.');
+    if (!allowDone && task.status === 'done') throw new Error('A tarefa informada já está concluída.');
+    return task;
+  }
+
   window.DN_APP_API.createTaskFromAI = async ({
     sourceRecordId, taskKey, title, priority = 5, priorityReason = '', area = '',
     due = '', effort = 'media', durationMin = null, confidence = null
@@ -354,8 +362,8 @@
   };
 
   window.DN_APP_API.editTask = async (taskIdValue, patch = {}) => {
-    const id = String(taskIdValue || '');
-    if (!id) throw new Error('Tarefa inválida.');
+    const task = requireExistingTask(taskIdValue);
+    const id = task.id;
     await insertStructuredEvent('tarefa_editada', { task_id: id, ...patch });
     await loadAppState();
     return tasks.find((item) => item.id === id) || null;
@@ -369,15 +377,20 @@
   };
 
   window.DN_APP_API.startTask = async (taskIdValue) => {
-    const id = String(taskIdValue || '');
+    const task = requireExistingTask(taskIdValue);
+    const id = task.id;
+    if (task.status === 'started') return task;
     await insertStructuredEvent('tarefa_iniciada', { task_id: id, started_at: new Date().toISOString() });
     await loadAppState();
+    return tasks.find((item) => item.id === id) || null;
   };
 
   window.DN_APP_API.completeTask = async (taskIdValue) => {
-    const id = String(taskIdValue || '');
+    const task = requireExistingTask(taskIdValue);
+    const id = task.id;
     await insertStructuredEvent('tarefa_concluida', { task_id: id, completed_at: new Date().toISOString() });
     await loadAppState();
+    return tasks.find((item) => item.id === id) || null;
   };
 
   // ---------- LINHA DO TEMPO ----------

@@ -6,6 +6,7 @@
   const SUPABASE_KEY = 'sb_publishable_OF1PQ_zzWupc7ZKLuyuvGw_Uip5qGX5';
   const CACHE_PREFIX = 'dn-ai-v07:';
   let client = null;
+  const persistedByRecord = new Map();
 
   const esc = (value) => String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -41,9 +42,14 @@
     }
     const tasks = Array.isArray(data.tarefas) ? data.tarefas : [];
     const emotions = Array.isArray(data.emocoes) ? data.emocoes : [];
+    const events = Array.isArray(data.eventos) ? data.eventos : [];
+    const taskActions = Array.isArray(data.acoes_tarefas) ? data.acoes_tarefas : [];
+    const category = [data.categoria, data.subcategoria].filter(Boolean).join(' › ');
     return `
       <div class="dn-ai-box"><div class="dn-ai-label">Resumo</div><div class="dn-ai-summary">${esc(data.resumo || '—')}</div></div>
-      <div class="dn-ai-grid"><div class="dn-ai-box"><div class="dn-ai-label">Categoria</div><div>${esc(data.categoria || '—')}</div></div><div class="dn-ai-box"><div class="dn-ai-label">Intenção</div><div>${esc(data.intencao || '—')}</div></div></div>
+      <div class="dn-ai-grid"><div class="dn-ai-box"><div class="dn-ai-label">Categoria</div><div>${esc(category || '—')}</div></div><div class="dn-ai-box"><div class="dn-ai-label">Intenção</div><div>${esc(data.intencao || '—')}</div></div></div>
+      ${events.length ? `<div class="dn-ai-box"><div class="dn-ai-label">Eventos</div>${events.map((event)=>`<div class="dn-ai-summary"><b>${esc(event.nome)}</b> · ${esc(event.estado)}${event.momento ? ` · ${esc(event.momento)}` : ''}</div>`).join('')}</div>` : ''}
+      ${taskActions.length ? `<div class="dn-ai-box"><div class="dn-ai-label">Ações sobre tarefas</div>${taskActions.map((action)=>`<div class="dn-ai-summary"><b>${esc(action.acao)}</b> · ${esc(action.titulo_referencia)}</div>`).join('')}</div>` : ''}
       ${tasks.length ? `<div class="dn-ai-box"><div class="dn-ai-label">Tarefas detectadas</div>${tasks.map((t)=>`<div class="dn-ai-summary">${esc(t.titulo)} <b>${esc(t.prioridade)}/10</b></div>`).join('')}</div>` : ''}
       ${emotions.length ? `<div class="dn-ai-box"><div class="dn-ai-label">Estados emocionais</div><div class="dn-ai-chips">${emotions.map((e)=>`<span class="dn-ai-chip">${esc(e.nome)}</span>`).join('')}</div></div>` : ''}
       ${data.sessao?.ativa ? `<div class="dn-ai-box"><div class="dn-ai-label">Sessão guiada</div><div class="dn-ai-summary">${esc(data.sessao.titulo)} · ${data.sessao.passos?.length || 0} etapas</div></div>` : ''}`;
@@ -54,38 +60,79 @@
   }
 
   async function syncTaskIfNeeded(data, id, text, status) {
+    const actionOutcomes = await window.DN_INTERPRETATIONS?.applyTaskActions?.(data) || [];
     const createTask = window.DN_APP_API?.createTaskFromAI;
-    if (typeof createTask !== 'function') return;
+    if (typeof createTask !== 'function') return actionOutcomes;
     const items = Array.isArray(data?.tarefas) ? data.tarefas : (data?.tipo === 'tarefa' ? [{ titulo: data.resumo || text, prioridade: 5, motivo_prioridade: '', area: data.categoria || '', prazo: '', energia: 'media', duracao_min: 0, confianca: .6 }] : []);
-    if (!items.length) return;
+    if (!items.length) {
+      const applied = actionOutcomes.filter((item) => item.applied).length;
+      if (applied) status.textContent = `Interpretação concluída. ${applied} tarefa${applied > 1 ? 's' : ''} atualizada${applied > 1 ? 's' : ''}.`;
+      return actionOutcomes;
+    }
     let created = 0;
     for (let i = 0; i < items.length; i++) {
       const t = items[i];
       const outcome = await createTask({ sourceRecordId: id || null, taskKey: `${i}-${t.titulo}`, title: String(t.titulo || '').trim(), priority: t.prioridade ?? 5, priorityReason: t.motivo_prioridade || '', area: t.area || '', due: t.prazo || '', effort: t.energia || 'media', durationMin: t.duracao_min ?? null, confidence: t.confianca ?? null });
       if (outcome?.created) created++;
     }
-    if (created) status.textContent = `Interpretação concluída. ${created} tarefa${created > 1 ? 's' : ''} adicionada${created > 1 ? 's' : ''}.`;
+    const applied = actionOutcomes.filter((item) => item.applied).length;
+    if (created || applied) status.textContent = `Interpretação concluída. ${created ? `${created} tarefa${created > 1 ? 's' : ''} adicionada${created > 1 ? 's' : ''}` : ''}${created && applied ? ' e ' : ''}${applied ? `${applied} tarefa${applied > 1 ? 's' : ''} atualizada${applied > 1 ? 's' : ''}` : ''}.`;
+    return actionOutcomes;
+  }
+
+  async function hydratePersistedInterpretation(id, wrap) {
+    const button = wrap.querySelector('.dn-ai-button');
+    const result = wrap.querySelector('.dn-ai-result');
+    const status = wrap.querySelector('.dn-ai-status');
+    try {
+      const row = await window.DN_INTERPRETATIONS?.load?.(id, client);
+      let data = row?.dados_json || null;
+      if (!data) {
+        data = readCache(id);
+        if (data) await window.DN_INTERPRETATIONS?.persist?.(id, data, { origem: 'cache_local_migrado', effectsApplied: true }, client);
+      }
+      if (data) {
+        persistedByRecord.set(id, data);
+        result.innerHTML = resultHtml(data);
+        button.textContent = 'Ver interpretação';
+        button.dataset.persisted = '1';
+      } else {
+        button.textContent = 'Interpretar com IA';
+      }
+    } catch (error) {
+      const cached = readCache(id);
+      if (cached) {
+        persistedByRecord.set(id, cached);
+        result.innerHTML = resultHtml(cached);
+        button.textContent = 'Ver interpretação';
+        button.dataset.persisted = '1';
+        status.textContent = 'Cache local disponível; a persistência remota ainda não está acessível.';
+      } else {
+        button.textContent = 'Interpretar com IA';
+      }
+    } finally {
+      button.disabled = false;
+    }
   }
 
   function ensureCardUi(card) {
     if (!card || card.querySelector('.dn-ai-wrap')) return;
 
     const id = card.dataset.recordId || card.getAttribute('data-record-id') || '';
-    const cached = readCache(id);
-
     const wrap = document.createElement('div');
     wrap.className = 'dn-ai-wrap';
     wrap.innerHTML = `
-      <button class="dn-ai-button" type="button">
-        ${cached ? 'Ver interpretação' : 'Interpretar com IA'}
+      <button class="dn-ai-button" type="button" disabled>
+        Verificando interpretação…
       </button>
       <div class="dn-ai-panel" hidden>
         <div class="dn-ai-status"></div>
-        <div class="dn-ai-result">${resultHtml(cached)}</div>
+        <div class="dn-ai-result">${resultHtml(null)}</div>
       </div>
     `;
 
     card.appendChild(wrap);
+    hydratePersistedInterpretation(id, wrap);
   }
 
   function scan(root = document) {
@@ -102,20 +149,12 @@
 
     panel.hidden = false;
 
-    const cached = readCache(id);
-    if (cached && button.dataset.force !== '1') {
-      result.innerHTML = resultHtml(cached);
+    const persisted = persistedByRecord.get(id);
+    if (persisted && button.dataset.force !== '1') {
+      result.innerHTML = resultHtml(persisted);
       button.textContent = 'Interpretar novamente';
       button.dataset.force = '1';
       status.textContent = 'Interpretação carregada.';
-
-      try {
-        await syncTaskIfNeeded(cached, id, text, status);
-      } catch (taskError) {
-        status.textContent =
-          `Interpretação carregada, mas não consegui adicionar a tarefa: ${taskError?.message || String(taskError)}`;
-      }
-
       return;
     }
 
@@ -140,7 +179,7 @@
       }
 
       const response = await client.functions.invoke('copiloto', {
-        body: { modo: 'interpretar', id: id || null, texto: text, regras: window.DN_COPILOT?.getRules?.() || [] }
+        body: { modo: 'interpretar', id: id || null, texto: text, regras: window.DN_COPILOT?.getRules?.() || [], ...(window.DN_INTERPRETATIONS?.requestContext?.() || {}) }
       });
 
       if (response.error) throw response.error;
@@ -148,7 +187,7 @@
         throw new Error('A função respondeu sem uma interpretação válida.');
       }
 
-      writeCache(id, response.data);
+      await window.DN_INTERPRETATIONS?.persist?.(id, response.data, { origem: 'timeline', effectsApplied: false }, client);
       result.innerHTML = resultHtml(response.data);
       status.textContent = 'Interpretação concluída.';
 
@@ -158,6 +197,10 @@
         status.textContent =
           `Interpretação concluída, mas não consegui adicionar a tarefa: ${taskError?.message || String(taskError)}`;
       }
+
+      await window.DN_INTERPRETATIONS?.persist?.(id, response.data, { origem: 'timeline', effectsApplied: true }, client);
+      persistedByRecord.set(id, response.data);
+      writeCache(id, response.data);
 
       button.textContent = 'Interpretar novamente';
       button.dataset.force = '1';
