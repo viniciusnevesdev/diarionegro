@@ -11,12 +11,13 @@
   <title>Diário Negro</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="tokens.css?v=20261023-233042-952969" />
-  <link rel="stylesheet" href="style.css?v=20261023-233042-952969" />
-  <link rel="stylesheet" href="copiloto.css?v=20261023-233042-952969" />
+  <link rel="stylesheet" href="tokens.css?v=20261024-070258-231657" />
+  <link rel="stylesheet" href="style.css?v=20261024-070258-231657" />
+  <link rel="stylesheet" href="copiloto.css?v=20261024-070258-231657" />
+  <link rel="stylesheet" href="settings.css?v=20261024-065533" />
   <!-- DN_VERSION_SYSTEM_START -->
   <meta name="dn-version" content="0.8.2" />
-  <meta name="dn-build" content="20261023-233042-952969" />
+  <meta name="dn-build" content="20261024-070258-231657" />
   <!-- DN_VERSION_SYSTEM_END -->
 </head>
 <body>
@@ -49,9 +50,6 @@
         </button>
         <button class="icon-btn glass" aria-label="Estatísticas" type="button">
           <span data-dn-symbol="chart.bar.fill"></span>
-        </button>
-        <button class="icon-btn glass" aria-label="Ajustes" type="button" id="accountButton">
-          <span data-dn-symbol="gearshape.fill"></span>
         </button>
       </div>
     </header>
@@ -95,7 +93,7 @@
       </button>
     </section>
 
-    <section class="section-block notes-section">
+    <section class="section-block notes-section" id="homeRecentNotes">
       <div class="section-heading">
         <h2>Últimas anotações</h2>
         <button type="button" class="text-btn" id="openTimelineFromNotes">Ver todas <span data-dn-symbol="chevron.right"></span></button>
@@ -152,9 +150,9 @@
         <span data-dn-symbol="chart.bar.fill"></span>
         <span>Estatísticas</span>
       </button>
-      <button class="dock-item" type="button">
-        <span data-dn-symbol="person.fill"></span>
-        <span>Perfil</span>
+      <button class="dock-item" id="accountButton" type="button" aria-label="Ajustes">
+        <span data-dn-symbol="gearshape.fill"></span>
+        <span>Ajustes</span>
       </button>
     </nav>
   </main>
@@ -333,55 +331,136 @@
     </div>
   </dialog>
 
-  <dialog id="accountDialog" class="demo-dialog">
-    <div class="demo-sheet">
-      <div class="sheet-handle"></div>
-      <h2>Conta</h2>
-      <p class="sheet-copy" id="accountEmail">Conectando…</p>
-
-      <section class="dn-version-panel" id="dnVersionPanel">
-        <div class="dn-version-panel-heading">
-          <span id="dnVersionPanelIcon"
-                data-dn-symbol="arrow.trianglehead.clockwise"></span>
-          <div>
-            <strong>Versão do aplicativo</strong>
-            <span id="dnVersionStateText">Verificando versão publicada…</span>
-          </div>
-        </div>
-
-        <div class="dn-version-row">
-          <span>Versão aberta</span>
-          <strong id="dnVersionOpen">v0.8.2</strong>
-        </div>
-
-        <div class="dn-version-row">
-          <span>Versão publicada</span>
-          <strong id="dnVersionPublished">Verificando…</strong>
-        </div>
-
-        <button type="button"
-                class="dn-version-update-btn"
-                id="dnVersionUpdate"
-                hidden>
-          <span data-dn-symbol="arrow.trianglehead.clockwise"></span>
-          <span>Carregar versão atual</span>
+  <!-- DN_SETTINGS_FULLSCREEN_V1 -->
+  <dialog id="accountDialog" class="dn-settings-dialog">
+    <section id="settingsMainPage" class="dn-settings-page" aria-label="Ajustes">
+      <header class="dn-settings-header">
+        <button type="button" class="dn-settings-back" id="closeAccount" aria-label="Voltar">
+          <span class="dn-settings-back-icon" data-dn-symbol="chevron.right"></span>
         </button>
-      </section>
+        <h1>Ajustes</h1>
+        <span class="dn-settings-header-spacer" aria-hidden="true"></span>
+      </header>
 
-      <button type="button" class="secondary-btn sheet-button" id="logoutButton">Sair da conta</button>
-      <button type="button" class="primary-btn sheet-button" id="closeAccount">Fechar</button>
-    </div>
+      <div class="dn-settings-scroll">
+        <section class="dn-settings-section">
+          <div class="dn-settings-section-title">CONTA E PERFIL</div>
+          <div class="dn-settings-card glass-card">
+            <div class="dn-settings-static-row">
+              <div class="dn-settings-row-copy">
+                <strong>Conta</strong>
+                <span id="accountEmail">Conectando…</span>
+              </div>
+            </div>
+            <button type="button" class="dn-settings-row dn-settings-row-danger" id="logoutButton">
+              <span class="dn-settings-row-copy">
+                <strong>Sair da conta</strong>
+                <small>Desconectar este aparelho</small>
+              </span>
+              <span class="dn-settings-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="dn-settings-section">
+          <div class="dn-settings-section-title">COPILOTO</div>
+          <div class="dn-settings-card glass-card">
+            <button type="button" class="dn-settings-row" id="openCopilotPhrases">
+              <span class="dn-settings-row-copy">
+                <strong>Frases rotativas</strong>
+                <small id="copilotPhrasesSummary">Personalize o que o Copiloto diz</small>
+              </span>
+              <span class="dn-settings-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="dn-settings-section">
+          <div class="dn-settings-section-title">TELA INICIAL</div>
+          <div class="dn-settings-card glass-card">
+            <label class="dn-settings-toggle-row" for="showRecentNotesToggle">
+              <span class="dn-settings-row-copy">
+                <strong>Mostrar últimas anotações</strong>
+                <small>Exibe os registros recentes na tela inicial.</small>
+              </span>
+
+              <span class="dn-switch">
+                <input
+                  type="checkbox"
+                  id="showRecentNotesToggle"
+                  checked
+                  aria-label="Mostrar últimas anotações"
+                />
+                <span class="dn-switch-track" aria-hidden="true">
+                  <span class="dn-switch-thumb"></span>
+                </span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section class="dn-settings-section">
+          <div class="dn-settings-section-title">APARÊNCIA</div>
+          <div class="dn-settings-card glass-card">
+            <div class="dn-settings-static-row">
+              <div class="dn-settings-row-copy">
+                <strong>Aparência do Diário Negro</strong>
+                <small>Mais opções serão adicionadas aqui.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="dn-settings-section">
+          <div class="dn-settings-section-title">DADOS</div>
+          <div class="dn-settings-card glass-card">
+            <div class="dn-settings-static-row">
+              <div class="dn-settings-row-copy">
+                <strong>Sincronização</strong>
+                <small>Supabase conectado à sua conta.</small>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="copilotPhrasesPage" class="dn-settings-page" aria-label="Frases do Copiloto" hidden>
+      <header class="dn-settings-header">
+        <button type="button" class="dn-settings-back" id="copilotPhrasesBack" aria-label="Voltar para Ajustes">
+          <span class="dn-settings-back-icon" data-dn-symbol="chevron.right"></span>
+        </button>
+        <h1>Frases do Copiloto</h1>
+        <span class="dn-settings-header-spacer" aria-hidden="true"></span>
+      </header>
+
+      <div class="dn-settings-scroll dn-phrases-scroll">
+        <p class="dn-settings-intro">
+          Estas são as frases que aparecem alternando no cartão do Copiloto.
+          Você pode editar, apagar, adicionar e mudar a ordem.
+        </p>
+
+        <div id="copilotPhrasesList" class="dn-phrases-list" aria-live="polite"></div>
+
+        <button type="button" id="addCopilotPhrase" class="dn-settings-add">+ Adicionar frase</button>
+        <div id="copilotPhrasesStatus" class="dn-settings-status" role="status" aria-live="polite"></div>
+        <button type="button" id="saveCopilotPhrases" class="dn-settings-save">Salvar alterações</button>
+        <button type="button" id="restoreCopilotPhrases" class="dn-settings-reset">Restaurar frases padrão</button>
+      </div>
+    </section>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20261023-233042-952969"></script>
-  <script src="dn-symbols.js?v=20261023-233042-952969"></script>
-  <script src="app.js?v=20261023-233042-952969"></script>
-  <script src="version-check.js?v=20261023-233042-952969"></script>
-  <script src="copiloto.js?v=20261023-233042-952969"></script>
+  <script src="config.js?v=20261024-070258-231657"></script>
+  <script src="dn-symbols.js?v=20261024-070258-231657"></script>
+  <script src="app.js?v=20261024-070258-231657"></script>
+  <script src="glass-system.js?v=20261024-070258-231657"></script>
+  <script src="version-check.js?v=20261024-070258-231657"></script>
+  <script src="copiloto.js?v=20261024-070258-231657"></script>
+  <script src="settings.js?v=20261024-065533"></script>
   <!-- DN_FEATURES_V07_AI_TIMELINE -->
-  <script src="dn-ai.js?v=20261023-233042-952969"></script>
+  <script src="dn-ai.js?v=20261024-070258-231657"></script>
 </body>
 </html>

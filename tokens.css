@@ -59,7 +59,7 @@
   /* Cores semânticas */
   --color-status-neutral: #757b8f;
 
-  --color-danger: #db1818;
+  --color-danger: #EA292C;
   --color-danger-soft: rgba(255,226,231,.72);
 
   --color-success: #259859;
@@ -69,10 +69,43 @@
 
   --color-info: #193b8e;
   --color-info-soft: #cde6ff;
+
+  /* DN_GLASS_SYSTEM_TOKENS_V1 */
+
+  /* Claro = Glass: 76% / 70% / .45px */
+  --dn-glass-glass-bg-top: rgba(255,255,255,.22);
+  --dn-glass-glass-bg-bottom: rgba(255,255,255,.10);
+  --dn-glass-glass-blur: 18px;
+  --dn-glass-glass-saturation: 1.14;
+  --dn-glass-glass-contrast: 1.01;
+  --dn-glass-glass-specular: .76;
+  --dn-glass-glass-dark-edge: .70;
+  --dn-glass-glass-rim: .45px;
+  --dn-glass-glass-shadow-alpha: .13;
+
+  /* Escuro = Soft: 55% / 46% / .35px */
+  --dn-glass-soft-bg-top: rgba(255,255,255,.15);
+  --dn-glass-soft-bg-bottom: rgba(255,255,255,.085);
+  --dn-glass-soft-blur: 10px;
+  --dn-glass-soft-saturation: 1.06;
+  --dn-glass-soft-contrast: 1;
+  --dn-glass-soft-specular: .55;
+  --dn-glass-soft-dark-edge: .46;
+  --dn-glass-soft-rim: .35px;
+  --dn-glass-soft-shadow-alpha: .09;
+
+  --dn-glass-dark-rgb: 128,128,128;
 }
 
 @media (max-width: 370px) {
   :root {
     --page-x: var(--space-md);
   }
+}
+
+
+/* DN_DESTRUCTIVE_TOKEN_V1 */
+:root {
+  --dn-color-destructive: #EA292C;
+  --dn-color-destructive-rgb: 234, 41, 44;
 }

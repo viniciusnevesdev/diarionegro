@@ -1,0 +1,11 @@
+# COPILOTO — FRASES ROTATIVAS
+# Uma frase por linha.
+# Linhas começando com # são ignoradas.
+# Você pode apagar, editar, adicionar e mudar a ordem.
+
+Eu tô aqui pra ajudar você.
+Vamos escolher uma coisa de cada vez.
+Se estiver difícil começar, eu escolho por você.
+Vamos tirar uma coisa da sua cabeça.
+Tem uma coisa que pode facilitar seu agora.
+Eu vejo o que está pendente e te ajudo a escolher.

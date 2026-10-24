@@ -113,7 +113,7 @@
       </div>
       <div id="dnCopilotIdle" class="dn-copilot-idle">
         <strong id="dnCopilotMicrocopy">Eu tô aqui pra ajudar você.</strong>
-        <span>Quando quiser, eu escolho uma coisa possível para o seu agora.</span>
+        <span>Eu escolho algo possível pra você fazer agora.</span>
       </div>
       <div id="dnNextAction" class="dn-next-action" hidden></div>
       <div class="dn-copilot-actions">
@@ -203,7 +203,100 @@
 
     bindUi();
     renderActiveSession();
+    watchCopilotMicrocopy();
   }
+
+
+  /* DN_COPILOT_MICROCOPY_AUTOFIT_V2 */
+  function fitCopilotMicrocopy() {
+    const el = document.getElementById('dnCopilotMicrocopy');
+    if (!el) return;
+
+    const MAX = 13.5;
+    const MIN = 12.3;
+    const STEP = 0.2;
+
+    el.style.fontSize = MAX + 'px';
+
+    const text = (el.textContent || '').trim();
+    if (!text) return;
+
+    const probe = document.createElement('span');
+
+    const cs = getComputedStyle(el);
+
+    probe.textContent = text;
+
+    probe.style.position = 'fixed';
+    probe.style.left = '-99999px';
+    probe.style.top = '-99999px';
+    probe.style.visibility = 'hidden';
+
+    probe.style.whiteSpace = 'nowrap';
+
+    probe.style.fontFamily = cs.fontFamily;
+    probe.style.fontWeight = cs.fontWeight;
+    probe.style.letterSpacing = cs.letterSpacing;
+
+    document.body.appendChild(probe);
+
+    const available = el.clientWidth;
+
+    let chosen = MAX;
+    let fits = false;
+
+    for (let size = MAX; size >= MIN; size -= STEP) {
+      probe.style.fontSize = size + 'px';
+
+      if (probe.getBoundingClientRect().width <= available) {
+        chosen = size;
+        fits = true;
+        break;
+      }
+    }
+
+    /*
+      Se uma redução pequena resolver, usamos essa exceção.
+      Se precisar reduzir demais, mantém 13.5px e deixa virar 2 linhas.
+    */
+    if (fits) {
+      el.style.fontSize = chosen.toFixed(1) + 'px';
+      el.dataset.fitMode = 'single';
+    } else {
+      /*
+        Se realmente precisar de duas linhas,
+        não reduzimos demais a fonte.
+      */
+      el.style.fontSize = '14.4px';
+      el.dataset.fitMode = 'double';
+    }
+
+    probe.remove();
+  }
+
+  function watchCopilotMicrocopy() {
+    const el = document.getElementById('dnCopilotMicrocopy');
+    if (!el) return;
+
+    fitCopilotMicrocopy();
+
+    const observer = new MutationObserver(() => {
+      requestAnimationFrame(fitCopilotMicrocopy);
+    });
+
+    observer.observe(el, {
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+
+    window.addEventListener(
+      'resize',
+      fitCopilotMicrocopy,
+      { passive: true }
+    );
+  }
+
 
   function bindUi() {
     $('#dnChooseNow')?.addEventListener('click', chooseNow);
@@ -569,14 +662,81 @@
     });
   }
 
-  const COPILOT_MICROCOPY = [
+  const COPILOT_MICROCOPY_FALLBACK = [
     'Eu tô aqui pra ajudar você.',
     'Vamos escolher uma coisa de cada vez.',
-    'Se estiver difícil começar, eu escolho por você.',
-    'Vamos tirar uma coisa da sua cabeça.',
-    'Tem uma coisa que pode facilitar seu agora.',
-    'Eu vejo o que está pendente e te ajudo a escolher.'
+    'Se estiver difícil começar, eu escolho por você.'
   ];
+
+  let COPILOT_MICROCOPY = [...COPILOT_MICROCOPY_FALLBACK];
+
+  async function loadCopilotMicrocopyLibrary() {
+    const clean = (values) =>
+      (Array.isArray(values) ? values : [])
+        .map(value => String(value || '').trim())
+        .filter(Boolean);
+
+    /* 1º: tenta frases personalizadas da conta Supabase */
+    try {
+      const appClient = window.DN_APP_API?.getClient?.();
+      const appSession = window.DN_APP_API?.getSession?.();
+
+      let custom = clean(
+        appSession?.user?.user_metadata?.dn_copilot_phrases
+      );
+
+      if (!custom.length && appClient) {
+        const { data, error } = await appClient.auth.getUser();
+
+        if (error) throw error;
+
+        custom = clean(
+          data?.user?.user_metadata?.dn_copilot_phrases
+        );
+      }
+
+      if (custom.length) {
+        COPILOT_MICROCOPY = custom;
+        return;
+      }
+    } catch (error) {
+      console.warn(
+        'Copiloto: não foi possível carregar frases da conta.',
+        error
+      );
+    }
+
+    /* 2º: fallback para o arquivo TXT */
+    try {
+      const response = await fetch(
+        'copiloto-frases.txt',
+        { cache: 'no-store' }
+      );
+
+      if (!response.ok) {
+        throw new Error('biblioteca padrão não encontrada');
+      }
+
+      const text = await response.text();
+
+      const phrases = text
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line =>
+          line &&
+          !line.startsWith('#')
+        );
+
+      if (phrases.length) {
+        COPILOT_MICROCOPY = phrases;
+      }
+    } catch (error) {
+      console.warn(
+        'Copiloto: usando frases de fallback.',
+        error
+      );
+    }
+  }
 
   let microcopyIndex = Math.floor(Math.random() * COPILOT_MICROCOPY.length);
   let motionTimer = null;
@@ -790,11 +950,40 @@
     if (!config?.supabaseUrl || !config?.supabasePublishableKey || !sdk?.createClient) return;
     client = window.DN_APP_API?.getClient?.() || sdk.createClient(config.supabaseUrl, config.supabasePublishableKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
     await Promise.allSettled([loadLearnedContext(), loadRecentEmotions()]);
+    await loadCopilotMicrocopyLibrary();
+    microcopyIndex = Math.floor(
+      Math.random() * COPILOT_MICROCOPY.length
+    );
     setCopilotMicrocopy();
     scheduleMicrocopy();
     scheduleCopilotMotion();
     setTimeout(() => maybePromptMood({ reason: 'tempo_sem_checkin' }), 1200);
   }
+
+
+  /* DN_COPILOT_PHRASES_LIVE_SYNC_V1 */
+  window.addEventListener(
+    'dn:copilot-phrases-updated',
+    (event) => {
+      const next = (
+        Array.isArray(event.detail?.phrases)
+          ? event.detail.phrases
+          : []
+      )
+        .map(value => String(value || '').trim())
+        .filter(Boolean);
+
+      if (!next.length) return;
+
+      COPILOT_MICROCOPY = next;
+
+      microcopyIndex = Math.floor(
+        Math.random() * COPILOT_MICROCOPY.length
+      );
+
+      setCopilotMicrocopy();
+    }
+  );
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();

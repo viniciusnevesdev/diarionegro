@@ -427,3 +427,69 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+
+/* DN_GLASS_COPILOTO_INNER_V1 */
+.dn-copilot-idle,
+.dn-next-action {
+  border: 0 !important;
+}
+
+
+/* DN_COPILOTO_IDLE_TEXT_V1 */
+.dn-copilot-idle strong {
+  width: 100%;
+  min-height: 2.44em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+
+/* DN_COPILOTO_MICROCOPY_FIT_V2 */
+.dn-copilot-idle strong {
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  text-wrap: balance;
+
+  font-size: 13.5px;
+  line-height: 1.22;
+
+  overflow: hidden;
+}
+
+
+/* DN_COPILOTO_MICROCOPY_LAYOUT_V3 */
+
+/* Área fixa para uma ou duas linhas */
+.dn-copilot-idle strong {
+  width: 100%;
+  height: 36px;
+  min-height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  text-wrap: balance;
+
+  overflow: hidden;
+}
+
+/* Subtítulo fixo */
+.dn-copilot-idle span {
+  width: 100%;
+  margin: 6px auto 0;
+
+  text-align: center;
+  text-wrap: balance;
+}

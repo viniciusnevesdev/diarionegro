@@ -1318,7 +1318,7 @@
 
   accountButton.addEventListener('click', () => {
     if (!session) return openLogin();
-    accountDialog.showModal();
+    accountDialog.show();
   });
   closeAccount.addEventListener('click', () => accountDialog.close());
   logoutButton.addEventListener('click', async () => {

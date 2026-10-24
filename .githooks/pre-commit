@@ -78,6 +78,7 @@ assets = [
     "config.js",
     "dn-symbols.js",
     "app.js",
+    "glass-system.js",
     "version-check.js",
     "copiloto.js",
     "dn-ai.js",

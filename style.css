@@ -220,8 +220,8 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
   min-height: 126px;
   border-radius: 24px;
   padding: 14px;
-  border: 1px solid rgba(255,255,255,.78);
-  box-shadow: 0 12px 30px rgba(77,69,99,.09), inset 0 1px 0 rgba(255,255,255,.94);
+  border: 0;
+  box-shadow: 0 12px 30px rgba(77,69,99,.09);
   background-color: rgba(255,255,255,.56);
   background-blend-mode: normal;
   backdrop-filter: blur(16px) saturate(1.14);
@@ -1133,4 +1133,111 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
 .dn-version-update-btn svg {
   width: 17px;
   height: 17px;
+}
+
+/* DN_GLASS_SYSTEM_V1_START */
+.dn-glass-surface{
+  --dn-g-bg-top:var(--dn-glass-glass-bg-top);
+  --dn-g-bg-bottom:var(--dn-glass-glass-bg-bottom);
+  --dn-g-blur:var(--dn-glass-glass-blur);
+  --dn-g-sat:var(--dn-glass-glass-saturation);
+  --dn-g-contrast:var(--dn-glass-glass-contrast);
+  --dn-g-specular:var(--dn-glass-glass-specular);
+  --dn-g-dark:var(--dn-glass-glass-dark-edge);
+  --dn-g-rim:var(--dn-glass-glass-rim);
+  --dn-g-shadow-alpha:var(--dn-glass-glass-shadow-alpha);
+
+  border-color:transparent !important;
+
+  -webkit-backdrop-filter:
+    blur(var(--dn-g-blur))
+    saturate(var(--dn-g-sat))
+    contrast(var(--dn-g-contrast));
+
+  backdrop-filter:
+    blur(var(--dn-g-blur))
+    saturate(var(--dn-g-sat))
+    contrast(var(--dn-g-contrast));
+
+  box-shadow:
+    calc(0px - var(--dn-g-rim)) 0 0 rgba(var(--dn-glass-dark-rgb),var(--dn-g-dark)),
+    var(--dn-g-rim) 0 0 rgba(var(--dn-glass-dark-rgb),var(--dn-g-dark)),
+    0 14px 30px rgba(0,0,0,var(--dn-g-shadow-alpha)) !important;
+}
+
+.dn-glass-surface[data-dn-glass="soft"],
+.dn-glass-soft{
+  --dn-g-bg-top:var(--dn-glass-soft-bg-top);
+  --dn-g-bg-bottom:var(--dn-glass-soft-bg-bottom);
+  --dn-g-blur:var(--dn-glass-soft-blur);
+  --dn-g-sat:var(--dn-glass-soft-saturation);
+  --dn-g-contrast:var(--dn-glass-soft-contrast);
+  --dn-g-specular:var(--dn-glass-soft-specular);
+  --dn-g-dark:var(--dn-glass-soft-dark-edge);
+  --dn-g-rim:var(--dn-glass-soft-rim);
+  --dn-g-shadow-alpha:var(--dn-glass-soft-shadow-alpha);
+}
+
+.dn-glass-fx{
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  z-index:20;
+}
+
+.dn-glass-fx::before{
+  content:none;
+}
+
+.dn-glass-fx::after{
+  content:"";
+  position:absolute;
+  inset:1px;
+  padding:var(--dn-g-rim);
+  border-radius:inherit;
+  pointer-events:none;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 11%,
+      rgba(255,255,255,.025) 17%,
+      rgba(255,255,255,calc(var(--dn-g-specular) * .18)) 22%,
+      rgba(255,255,255,calc(var(--dn-g-specular) * .72)) 29%,
+      rgba(255,255,255,var(--dn-g-specular)) 39%,
+      rgba(255,255,255,var(--dn-g-specular)) 61%,
+      rgba(255,255,255,calc(var(--dn-g-specular) * .72)) 71%,
+      rgba(255,255,255,calc(var(--dn-g-specular) * .18)) 78%,
+      rgba(255,255,255,.025) 83%,
+      transparent 89%,
+      transparent 100%
+    );
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+}
+/* DN_GLASS_SYSTEM_V1_END */
+
+
+/* DN_GLASS_ACTIONS_V1 */
+.dn-glass-action {
+  border: 0 !important;
+}
+
+
+/* DN_GLASS_HABITOS_V1 */
+.habit-card {
+  border: 0 !important;
+}
+
+/* Remove a antiga camada de brilho/sombra do cartão.
+   O acabamento agora vem exclusivamente do sistema Glass. */
+.habit-card::after {
+  content: none !important;
 }
