@@ -152,13 +152,29 @@
   }
 
   function enhancePage(){
-    const page=$('#dnMemoryPage'), scroll=page?.querySelector('.dn-memory-scroll'); if(!page||!scroll||$('#dnMemoryOpenReanalysis')) return;
-    const summary=$('#dnMemorySummary');
-    const card=document.createElement('section'); card.className='dn-memory-learning-card glass-card'; card.innerHTML=`<div class="dn-memory-learning-icon">${icon('arrow.trianglehead.clockwise')}</div><div class="dn-memory-learning-copy"><span class="dn-memory-kicker">APRENDIZADO</span><h2>Reanalisar histórico</h2><p>Reinterprete registros antigos com a inteligência atual, sem recriar tarefas antigas.</p><small id="dnMemoryLastReanalysis">Carregando histórico…</small></div><button type="button" id="dnMemoryOpenReanalysis" class="dn-memory-primary-action">Reanalisar</button>`;
-    summary?.insertAdjacentElement('afterend',card);
-    const actions=$('.dn-memory-actions'); if(actions){const box=document.createElement('details'); box.className='dn-memory-maintenance dn-glass-soft'; box.innerHTML='<summary>Dados e manutenção</summary>'; actions.parentNode.insertBefore(box,actions); box.appendChild(actions);}
+    const page=$('#dnMemoryPage');
+    const scroll=page?.querySelector('.dn-memory-scroll');
+    if(!page||!scroll||$('#dnMemoryOpenReanalysis')) return false;
+    const card=document.createElement('section');
+    card.className='dn-memory-learning-card glass-card';
+    card.innerHTML=`<div class="dn-memory-learning-icon">${icon('arrow.trianglehead.clockwise')}</div><div class="dn-memory-learning-copy"><span class="dn-memory-kicker">APRENDIZADO</span><h2>Reanalisar histórico</h2><p>Reinterprete registros antigos com a inteligência atual, sem recriar tarefas antigas.</p><small id="dnMemoryLastReanalysis">Carregando histórico…</small></div><button type="button" id="dnMemoryOpenReanalysis" class="dn-memory-primary-action">Reanalisar</button>`;
+    const summary=$('#dnMemorySummary',page);
+    const toolbar=page.querySelector('.dn-memory-toolbar');
+    if(summary) summary.insertAdjacentElement('afterend',card);
+    else if(toolbar) scroll.insertBefore(card,toolbar);
+    else scroll.prepend(card);
+    const actions=page.querySelector('.dn-memory-actions');
+    if(actions && !page.querySelector('.dn-memory-maintenance')){
+      const box=document.createElement('details');
+      box.className='dn-memory-maintenance dn-glass-soft';
+      box.innerHTML='<summary>Dados e manutenção</summary>';
+      actions.parentNode.insertBefore(box,actions);
+      box.appendChild(actions);
+    }
     window.DNGlass?.hydrate?.(page);
     $('#dnMemoryOpenReanalysis')?.addEventListener('click',openDialog);
+    refreshLatest();
+    return true;
   }
 
   async function refreshLatest(){const el=$('#dnMemoryLastReanalysis'); if(!el)return; try{const r=await latestRun(); el.textContent=r?`${r.status==='concluida'?'Concluída':r.status==='interrompida'?'Interrompida':'Última execução'} em ${fmt(r.completed_at||r.started_at)} · ${r.processados}/${r.total_registros} registros`:'Nenhuma reanálise registrada ainda.';}catch{el.textContent='Reanálise ainda não ativada no banco.';}}
@@ -172,6 +188,26 @@
   function progress(i,total,s){const p=total?Math.round(i/total*100):0; $('#dnReanalysisProgressFill').style.width=`${p}%`; $('#dnReanalysisProgressLabel').textContent=`${i} de ${total} registros`; $('#dnReanalysisLiveStats').innerHTML=`<span><b>${s.created}</b> novas</span><span><b>${s.candidates}</b> a confirmar</span><span><b>${s.reinforced}</b> reforços</span><span><b>${s.conflicts}</b> conflitos</span><span><b>${s.failed}</b> falhas</span>`;}
   async function startFromDialog(){if(state.running)return; state.running=true; state.stop=false; $('#dnReanalysisSetup').hidden=true; $('#dnReanalysisProgress').hidden=false; try{const result=await run({scope:$('input[name="dnReanalysisScope"]:checked')?.value||'desatualizados',fromDate:$('#dnReanalysisFrom').value,toDate:$('#dnReanalysisTo').value},{shouldStop:()=>state.stop,onStart:({total})=>progress(0,total,{created:0,candidates:0,reinforced:0,conflicts:0,failed:0}),onProgress:({index,total,stats})=>progress(index,total,stats)}); $('#dnReanalysisProgress').hidden=true; const r=$('#dnReanalysisReport'); r.hidden=false; r.innerHTML=`<div class="dn-memory-dialog-heading"><span>${icon(result.run.status==='concluida'?'checkmark.circle.fill':'exclamationmark.circle.fill')}</span><div><small>RESULTADO</small><h2>${result.run.status==='concluida'?'Reanálise concluída':'Reanálise interrompida'}</h2></div></div><div class="dn-reanalysis-report-grid"><span><b>${result.stats.created}</b> novas</span><span><b>${result.stats.candidates}</b> a confirmar</span><span><b>${result.stats.reinforced}</b> reforços</span><span><b>${result.stats.conflicts}</b> conflitos</span><span><b>${result.stats.failed}</b> falhas</span></div><div class="sheet-actions"><button type="button" class="secondary-btn" id="dnReanalysisClose">Fechar</button><button type="button" class="primary-btn" id="dnReanalysisReview">Revisar memórias</button></div>`; $('#dnReanalysisClose').onclick=()=>$('#dnMemoryReanalysisDialog').close(); $('#dnReanalysisReview').onclick=()=>{ $('#dnMemoryReanalysisDialog').close(); const st=$('#dnMemoryStatus'); if(st){st.value='aguardando_confirmacao'; st.dispatchEvent(new Event('change'));} }; await window.DN_MEMORY.refresh?.(); await refreshLatest();}catch(e){$('#dnReanalysisProgress').hidden=true; const r=$('#dnReanalysisReport'); r.hidden=false; r.innerHTML=`<p class="form-error">${esc(e?.message||String(e))}</p><button class="secondary-btn sheet-button" id="dnReanalysisClose">Fechar</button>`; $('#dnReanalysisClose').onclick=()=>$('#dnMemoryReanalysisDialog').close();}finally{state.running=false;}}
 
-  function boot(){enhancePage(); ensureDialog(); refreshLatest(); const open=window.DN_MEMORY?.open; if(open){window.DN_MEMORY.open=async(...args)=>{const v=await open(...args); enhancePage(); await refreshLatest(); return v;};} window.DN_MEMORY_REANALYSIS={VERSION,INPUTS,selectRecords,run,latestRun};}
+  function boot(){
+    ensureDialog();
+    enhancePage();
+    const open=window.DN_MEMORY?.open;
+    if(open && !window.DN_MEMORY_REANALYSIS_OPEN_WRAPPED){
+      window.DN_MEMORY.open=async(...args)=>{
+        const result=await open(...args);
+        requestAnimationFrame(()=>{enhancePage();refreshLatest();});
+        setTimeout(()=>{enhancePage();refreshLatest();},80);
+        return result;
+      };
+      window.DN_MEMORY_REANALYSIS_OPEN_WRAPPED=true;
+    }
+    if(!window.__DN_REANALYSIS_OBSERVER){
+      const observer=new MutationObserver(()=>{if(enhancePage())refreshLatest();});
+      observer.observe(document.body,{childList:true,subtree:true});
+      window.__DN_REANALYSIS_OBSERVER=observer;
+    }
+    window.DN_MEMORY_REANALYSIS={VERSION,INPUTS,selectRecords,run,latestRun,enhancePage};
+    setTimeout(()=>{enhancePage();refreshLatest();},250);
+  }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,0),{once:true}); else setTimeout(boot,0);
 })();
