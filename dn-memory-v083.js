@@ -120,10 +120,10 @@
       const text=String(m?.texto||'').trim(); if(!text) continue;
       const source={record_id:String(record.id),source_type:'reanalisacao_historica',source_label:`Registro de ${fmt(record.registrado_em)}`,source_excerpt:String(m.evidencia||record.texto_original||'').slice(0,1000),relation_type:'origem',confidence_contribution:Number(m.confianca??.5),metadata_json:{reanalysis_id:runId,context_version:VERSION,classificacao:m.classificacao}};
       const details={tipo:m.tipo||'outro',categoria:String(m.categoria||'Outro'),confianca:Number(m.confianca??.5),confidence_initial:Number(m.confianca??.5),source_record_id:String(record.id),source_type:source.source_type,source_label:source.source_label,source_excerpt:source.source_excerpt,first_learned_at:record.registrado_em,metadata_json:{reanalysis_id:runId,context_version:VERSION,justificativa:String(m.justificativa||''),classificacao:m.classificacao},source};
-      const r=(_meta?.model==='copiloto-fallback' || m.classificacao==='inferencia')
+      const r=(analysis?._meta?.model==='copiloto-fallback' || m.classificacao==='inferencia')
         ? await window.DN_MEMORY.createCandidate(text,details,c)
         : await window.DN_MEMORY.create({texto:text,origem:'registro_declaracao_clara',status:'ativa',ativa:true,confirmed_by_user:false,...details},{source},c);
-      if(r?.duplicate) out.reinforced++; else{out.created++; if(m.classificacao==='inferencia' || _meta?.model==='copiloto-fallback') out.candidates++;} if(r?.conflict) out.conflicts++;
+      if(r?.duplicate) out.reinforced++; else{out.created++; if(m.classificacao==='inferencia' || analysis?._meta?.model==='copiloto-fallback') out.candidates++;} if(r?.conflict) out.conflicts++;
     }
     return out;
   }
@@ -133,18 +133,18 @@
   async function run(options={},hooks={}){
     const c=client(),s=await session(),scope=['nunca_analisados','desatualizados','periodo','tudo'].includes(options.scope)?options.scope:'desatualizados';
     const rows=await selectRecords(scope,options.fromDate,options.toDate), stats={processed:0,failed:0,created:0,reinforced:0,candidates:0,conflicts:0};
-    const {data:run,error}=await c.from('reanalisacoes').insert({user_id:s.user.id,scopo,status:'executando',context_version:VERSION,filtro_inicio:options.fromDate?new Date(`${options.fromDate}T00:00:00`).toISOString():null,filtro_fim:\options.toDate?new Date(`${options.toDate}T23:59:59`).toISOString():null,total_registros:rows.length,metadata_json:{inputs:INPUTS}}).select('*').single(); if(error)throw error; let model=null,failures=[]; hooks.onStart?.({total:rows.length,run });
+    const {data:run,error}=await c.from('reanalisacoes').insert({user_id:s.user.id,escopo:scope,status:'executando',context_version:VERSION,filtro_inicio:options.fromDate?new Date(`${options.fromDate}T00:00:00`).toISOString():null,filtro_fim:options.toDate?new Date(`${options.toDate}T23:59:59`).toISOString():null,total_registros:rows.length,metadata_json:{inputs:INPUTS}}).select('*').single(); if(error)throw error; let model=null,failures=[]; hooks.onStart?.({total:rows.length,run });
     for(let i=0;i<rows.length;i++){if(hooks.shouldStop?.())break; const record=rows[i]; try{const analysis=await invoke(record); const saved=await saveInterpretation(record,analysis,run.id); model=model||saved.model; const m=await saveMemories(record,analysis,run.id); stats.processed++; stats.created+=m.created; stats.reinforced+=m.reinforced; stats.candidates+=m.candidates; stats.conflicts+=m.conflicts;}catch(e){stats.failed++; failures.push({record_id:String(record.id),error:String(e?.message||e).slice(0,300)}
       await c.from('reanalisacoes').update({processados:stats.processed,falhas:stats.failed,memorias_criadas:stats.created,memorias_reforcadas:stats.reinforced,candidatos_criados:stats.candidates,conflitos_detectados:stats.conflicts,modelo:model,metadata_json:{inputs:INPUTS,failed_records:failures.slice(-20)}}).eq('user_id',s.user.id).eq('id',run.id); hooks.onProgress?.({index:i+1,total:rows.length,stats:{...stats}});
     }
-    const stopped=hooks.shouldStop?.()===true, finalStatus=stopped?'interrompida':'concluida'; const {data:inal,error:finalError}=await c.from('reanalisacoes').update({status:finalStatus,processados:stats.processed,falhas:stats.failed,memorias_criadas:stats.created,memorias_reforcadas:stats.reinforced,candidatos_criados:stats.candidates,conflitos_detectados:stats.conflicts,modelo:model,completed_at:new Date().toISOString(),metadata_json:{inputs:INPUTS,failed_records:failures.slice(-20)}}).eq('user_id',s.user.id).eq('id',run.id).select('*').single(); if(finalError)row finalError; return {run:final,stats,failures,total:rows.length};
+    const stopped=hooks.shouldStop?.()===true, finalStatus=stopped?'interrompida':'concluida'; const {data:final,error:finalError}=await c.from('reanalisacoes').update({status:finalStatus,processados:stats.processed,falhas:stats.failed,memorias_criadas:stats.created,memorias_reforcadas:stats.reinforced,candidatos_criados:stats.candidates,conflitos_detectados:stats.conflicts,modelo:model,completed_at:new Date().toISOString(),metadata_json:{inputs:INPUTS,failed_records:failures.slice(-20)}}).eq('user_id',s.user.id).eq('id',run.id).select('*').single(); if(finalError)throw finalError; return {run:final,stats,failures,total:rows.length};
   }
 
   function enhancePage(){
-    const page=$('#dnMemoryPage'); const scroll=$('#dnSemoryPage .dn-memory-scroll') || $('#dnMemoryPage .dn-memory-scroll'); if(!page||!scroll)return;
-    page.classList.add('dn-v083-enhanced'); if($('#dnMemoryReanalysis',roll) || $('#dnMemoryReanalysis',scroll))return;
+    const page=$('#dnMemoryPage'); const scroll=$('#dnMemoryPage .dn-memory-scroll') || $('#dnMemoryPage .dn-memory-scroll'); if(!page||!scroll)return;
+    page.classList.add('dn-v083-enhanced'); if($('#dnMemoryReanalysis',scroll) || $('#dnMemoryReanalysis',scroll))return;
     const summary=$('#dnMemorySummary',scroll) || $('#dnMemorySummary'); if(!summary)return;
-    summary.insertAdjacentHTML('afterend',`<section id="dnMemoryReanalysis" class="dn-memory-reanalysis glass-card"><div class="dn-memory-reanalysis-icon">${icon('arrow.trianglehead.clockwise')}</div><div class="dn-memory-reanalysis-copy"><span class="dn-memory-kicker">APRENDIZADO</span><h2>Reanalisar histório</h2><p>Reinterpreta seus registros com a inteligência atual. Não recria tarefas antigas.</p><small id="dnMemoryLastReanalysis">Carregando histórico …</small></div><button type="button" id="dnMemoryOpenReanalysis" class="dn-memory-reanalysis-action">Reanalisar</button></section>`);
+    summary.insertAdjacentHTML('afterend',`<section id="dnMemoryReanalysis" class="dn-memory-reanalysis glass-card"><div class="dn-memory-reanalysis-icon">${icon('arrow.trianglehead.clockwise')}</div><div class="dn-memory-reanalysis-copy"><span class="dn-memory-kicker">APRENDIZADO</span><h2>Reanalisar histórico</h2><p>Reinterpreta seus registros com a inteligência atual. Não recria tarefas antigas.</p><small id="dnMemoryLastReanalysis">Carregando histórico …</small></div><button type="button" id="dnMemoryOpenReanalysis" class="dn-memory-reanalysis-action">Reanalisar</button></section>`);
     $('#dnMemoryOpenReanalysis')?.addEventListener('click',openDialog); window.DNGlass?.hydrate?.(page);
   }
 
