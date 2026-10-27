@@ -69,7 +69,10 @@
 
     <section class="section-block habits-section">
       <div class="section-heading">
-        <h2>Hábitos & metas</h2>
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <h2>Hábitos & metas</h2>
+          <button type="button" class="text-btn" id="toggleHabitsHome" aria-controls="habitGrid" aria-expanded="true" aria-label="Ocultar hábitos e metas">Ocultar</button>
+        </div>
         <button type="button" class="text-btn" id="openHabitsManager">Ver todos <span data-dn-symbol="chevron.right"></span></button>
       </div>
 
@@ -454,6 +457,29 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script>
+    (() => {
+      const button = document.getElementById('toggleHabitsHome');
+      const grid = document.getElementById('habitGrid');
+      if (!button || !grid) return;
+      const key = 'dn-hide-habits-home-v1';
+      let hidden = false;
+      try { hidden = localStorage.getItem(key) === '1'; } catch {}
+      function render() {
+        grid.hidden = hidden;
+        grid.style.display = hidden ? 'none' : '';
+        button.textContent = hidden ? 'Mostrar' : 'Ocultar';
+        button.setAttribute('aria-expanded', String(!hidden));
+        button.setAttribute('aria-label', (hidden ? 'Mostrar' : 'Ocultar') + ' hábitos e metas');
+      }
+      button.addEventListener('click', () => {
+        hidden = !hidden;
+        try { localStorage.setItem(key, hidden ? '1' : '0'); } catch {}
+        render();
+      });
+      render();
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20261027-060612-806406"></script>
   <script src="dn-symbols.js?v=20261027-060612-806406"></script>
