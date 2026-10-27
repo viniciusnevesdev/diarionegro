@@ -1,6 +1,6 @@
 import json
 import pathlib
-import subprocess
+from js_runtime import evaluate_browser, parse_browser
 import unittest
 
 
@@ -13,33 +13,11 @@ class V082MemoryTests(unittest.TestCase):
         return (ROOT / path).read_text(encoding="utf-8")
 
     def run_memory_js(self, expression):
-        script = (
-            "ObjC.import('Foundation');"
-            "function run(argv){"
-            "globalThis.window={};"
-            "globalThis.document={readyState:'loading',addEventListener:function(){},querySelector:function(){return null;}};"
-            "const s=$.NSString.stringWithContentsOfFileEncodingError(argv[0],$.NSUTF8StringEncoding,null).js;"
-            "eval(s);return JSON.stringify(" + expression + ");}"
-        )
-        result = subprocess.run(
-            ["osascript", "-l", "JavaScript", "-e", script, str(ROOT / "dn-memory.js")],
-            check=False, capture_output=True, text=True,
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        return json.loads(result.stdout)
+        return evaluate_browser(ROOT / 'dn-memory.js', expression)
 
     def test_all_browser_javascript_parses(self):
-        parser = (
-            "ObjC.import('Foundation');function run(argv){"
-            "const s=$.NSString.stringWithContentsOfFileEncodingError(argv[0],$.NSUTF8StringEncoding,null).js;"
-            "new Function(s);return 'ok';}"
-        )
-        for filename in ["app.js", "dn-interpretations.js", "dn-memory.js", "copiloto.js", "dn-ai.js", "settings.js"]:
-            result = subprocess.run(
-                ["osascript", "-l", "JavaScript", "-e", parser, str(ROOT / filename)],
-                check=False, capture_output=True, text=True,
-            )
-            self.assertEqual(result.returncode, 0, f"{filename}: {result.stderr}")
+        for filename in ['app.js', 'dn-interpretations.js', 'dn-memory.js', 'copiloto.js', 'dn-ai.js', 'settings.js']:
+            parse_browser(ROOT / filename)
 
     def test_schema_has_memory_sources_history_and_usage(self):
         sql = self.read(MIGRATION).lower()
@@ -132,14 +110,14 @@ class V082MemoryTests(unittest.TestCase):
         memory = self.read("dn-memory.js")
         edge = self.read("supabase/functions/copiloto/index.ts")
         self.assertIn("BASE_CONTEXT_RULES", memory)
-        self.assertIn("regras de produto, separado das memórias", memory)
+        self.assertIn("Regras de produto, separadas das memórias", memory)
         self.assertIn("const BASE_CONTEXT", edge)
 
     def test_copilot_creates_candidates_corrections_and_records_usage(self):
         copilot = self.read("copiloto.js")
         self.assertIn("origem: 'inferencia_ia_nao_confirmada'", copilot)
         self.assertIn("rememberCorrectionWithFallback", copilot)
-        self.assertIn("DN_MEMORY?.recordUses", copilot)
+        self.assertIn("insert into public.memoria_usos", self.read("supabase/migrations/20261027140000_contexto_copiloto_autorizado.sql"))
         self.assertIn("if (input.origem === 'inferencia_ia_nao_confirmada') return null", copilot)
         self.assertIn("data-save-memory=\"${originalIndex}\"", copilot)
 

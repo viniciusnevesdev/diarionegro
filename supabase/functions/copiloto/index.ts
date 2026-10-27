@@ -8,18 +8,7 @@ const CORS = {
 const BASE_CONTEXT = `
 Você é o Copiloto do Diário Negro de Vinícius. Seu papel é reduzir carga mental e transformar realidade bruta em compreensão e próxima ação concreta.
 
-Contexto pessoal essencial:
-- Vinícius é adulto jovem, mora sozinho e trabalha por conta própria como manicure/nail designer. O trabalho é sua fonte principal de renda e depende de clientes, divulgação e materiais disponíveis.
-- Ele pode conseguir lidar com projetos intelectualmente complexos e, ao mesmo tempo, ficar bloqueado por tarefas cotidianas simples. Não confunda capacidade intelectual com facilidade executiva.
-- Muitas pendências juntas podem virar sensação de caos, esquecimento e dificuldade de decidir por onde começar. Prefira uma próxima ação pequena e concreta a listas gigantes.
-- Moradia, aluguel, contas essenciais, trabalho/renda e materiais necessários para atender clientes têm peso alto.
-- Autocuidado e saúde mental não ficam sempre por último. Isolamento prolongado, solidão, tristeza, falta de sair de casa e pouco contato humano têm relevância elevada no caso dele.
-- Uma caminhada curta, ver pessoas, tomar sol ou sair de casa pode ter prioridade alta quando houver isolamento, mesmo parecendo trivial para uma pessoa genérica.
-- Responder familiares/amigos/clientes e enfrentar conversas evitadas pode ser importante. Quando houver bloqueio, proponha o menor primeiro passo possível.
-- Divulgação do trabalho é manutenção do negócio, não mero extra estético.
-- Bagunça física pode aumentar carga mental. Em fotos de ambientes, crie uma sessão guiada temporária com uma ação por vez; não transforme cada objeto fora do lugar em tarefa permanente.
 - Só crie tarefa permanente para algo que continuará pendente depois daquela sessão: comprar, consertar, resolver, contatar, pagar, agendar etc.
-- Bagunças escondidas em armários/gavetas, descarte/doação e organização gradual também são tarefas legítimas, mas devem ser quebradas em partes pequenas.
 - Nem tudo que ele menciona é tarefa. Diferencie tarefa, compromisso, vontade, ideia, registro e sentimento.
 - Emoções explícitas são dados importantes. Registre tristeza, solidão, alívio, orgulho, tranquilidade etc. sem diagnosticar e sem transformar emoção em tarefa.
 - Relações observadas entre emoções e acontecimentos são associações, não causalidade. Use linguagem como “parece estar associado” quando apropriado.
@@ -159,6 +148,20 @@ function outputText(payload: any): string {
   return "";
 }
 
+async function authorizedContext(req: Request, mode: string) {
+  const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_ANON_KEY");
+  const authorization = req.headers.get("authorization");
+  if (!url || !key || !authorization) throw new Error("Contexto autorizado indisponível.");
+  const response = await fetch(`${url}/rest/v1/rpc/dn_contexto_copiloto`, {
+    method: "POST", headers: { apikey: key, Authorization: authorization, "Content-Type": "application/json" },
+    body: JSON.stringify({p_interaction_id: crypto.randomUUID(), p_mode: mode})
+  });
+  if (!response.ok) throw new Error("Não foi possível verificar o contexto autorizado.");
+  const context = await response.json();
+  if (!Array.isArray(context?.memorias) || !Array.isArray(context?.associacoes)) throw new Error("Contexto autorizado inválido.");
+  return context;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
@@ -168,8 +171,14 @@ Deno.serve(async (req) => {
     if (!apiKey) throw new Error("OPENAI_API_KEY não configurada no Supabase.");
     const model = Deno.env.get("OPENAI_MODEL") || "gpt-6-luna";
     const modo = String(body?.modo || "interpretar");
-    const regras = Array.isArray(body?.regras) ? body.regras.slice(0, 80).map((x: any) => String(x)).filter(Boolean) : [];
-    const contextExtra = regras.length ? `\nREGRAS E CORREÇÕES APRENDIDAS COM VINÍCIUS:\n- ${regras.join("\n- ")}` : "";
+    if (modo !== "interpretar" && modo !== "decidir_agora" && modo !== "reanalisar_historico") throw new Error("Modo inválido.");
+    if (modo === "reanalisar_historico" && Deno.env.get("DN_HISTORICAL_REANALYSIS_ENABLED") === "false") throw new Error("Reanálise histórica temporariamente indisponível.");
+    // Nunca confiar em regras fornecidas pelo cliente. Reanálise histórica pode
+    // explicitamente dispensar todo contexto pessoal, sem caminho alternativo.
+    const context = modo === "reanalisar_historico" || Deno.env.get("DN_MEMORY_CONTEXT_ENABLED") === "false" ? {memorias: [], associacoes: []} : await authorizedContext(req, modo);
+    const corrections = context.memorias.filter((m: any) => m.origem === "correcao_explicitamente_lembrada");
+    const memories = context.memorias.filter((m: any) => m.origem !== "correcao_explicitamente_lembrada");
+    const contextExtra = `\nCONTEXTO AUTORIZADO. Correções explícitas prevalecem sempre sobre inferências; associações são hipóteses, não causas ou regras.\nCORREÇÕES EXPLÍCITAS: ${JSON.stringify(corrections.map((m: any) => m.texto))}\nMEMÓRIAS CONFIRMADAS: ${JSON.stringify(memories.map((m: any) => m.texto))}\nASSOCIAÇÕES CONFIRMADAS E AUTORIZADAS: ${JSON.stringify(context.associacoes.map((a: any) => ({sujeito:a.sujeito,relacao:a.relacao,objeto:a.objeto})))}`;
 
     let schema: any = interpretSchema;
     let userText = String(body?.texto || "").trim();
@@ -182,12 +191,13 @@ Deno.serve(async (req) => {
       instruction += `\nEscolha UMA única próxima ação plausível agora. Não escolha mecanicamente a maior nota: considere impacto, bloqueios e emoções recentes. Se uma tarefa grande for escolhida, primeiro_passo deve ser uma microação concreta. Se não houver tarefa adequada, uma ação de autocuidado/social só pode ser sugerida se o contexto a sustentar. Use task_id exatamente como recebido quando escolher uma tarefa existente.`;
       userText = `AGORA: ${String(body?.agora || "")}\n\nTAREFAS ATUAIS:\n${JSON.stringify(tasks)}\n\nEMOÇÕES/ESTADOS RECENTES (com horário):\n${JSON.stringify(emotions)}\n\nEscolha o que fazer agora.`;
     } else {
-      const tasks = Array.isArray(body?.tarefas)
+      const tasks = modo !== "reanalisar_historico" && Array.isArray(body?.tarefas)
         ? body.tarefas.slice(0, 200).filter((task: any) => task && typeof task.id === "string" && task.id.trim())
         : [];
       const now = String(body?.agora || "");
       const timezone = String(body?.timezone || "UTC");
       instruction += `\nAo interpretar:\n- Uma entrada pode conter ZERO, UMA ou VÁRIAS tarefas; separe-as.\n- Não transforme vontade/ideia/sentimento em obrigação sem sustentação.\n- categoria é a área ampla e subcategoria é o recorte útil, sem criar uma taxonomia rígida. Exemplo: Rotina > Cuidado pessoal.\n- Registre acontecimentos da vida em eventos[], mesmo quando não forem tarefas. “comecei a tomar banho” vira Banho/iniciado; “terminei o banho” vira Banho/concluído.\n- Use momento para preservar a expressão temporal do usuário ou um ISO quando ela puder ser determinada com segurança usando AGORA e TIMEZONE.\n- acoes_tarefas[] só pode referenciar IDs presentes em TAREFAS ABERTAS. Copie o ID exatamente; jamais invente ou altere um ID.\n- Só proponha concluir/iniciar/editar uma tarefa existente com evidência inequívoca e confiança alta. Menção vaga ou mera semelhança não basta.\n- Se a entrada informa que uma tarefa existente já aconteceu, use acoes_tarefas[] e NÃO replique essa pendência em tarefas[].\n- tarefas[] contém apenas pendências realmente novas. Acontecimentos concluídos e rotinas sem pendência não viram tarefas.\n- Se houver foto de ambiente bagunçado, sessao.ativa=true e crie passos temporários em ordem; mostre ações pequenas. As tarefas permanentes ficam em tarefas[].\n- Se houver print de conversa, identifique pendências reais, compromissos ou respostas necessárias sem presumir demais.\n- Emoções explícitas devem entrar em emocoes[]. Use intensidade=-1 quando não for possível estimar com segurança.\n- Sugira memória apenas quando a entrada realmente ensina uma regra reutilizável sobre Vinícius, objeto, lugar ou preferência. Não sugira acontecimentos triviais isolados nem estados momentâneos.\n- memorias_sugeridas[] representa candidatos: o cliente deve guardá-los como inferências não confirmadas e eles não podem valer como verdade até confirmação explícita do usuário.\n- prioridade 10 é reservada para impacto/urgência realmente altos. Explique o motivo em uma frase curta.`;
+      if (modo === "reanalisar_historico") instruction += "\nReanalise somente o registro histórico, sem criar, concluir, editar ou reabrir tarefas atuais; não use contexto pessoal anterior.";
       if (!userText) userText = "Analise esta entrada visual e transforme-a em contexto, tarefas permanentes, emoções e/ou sessão guiada conforme apropriado.";
       userText = `ENTRADA DO USUÁRIO:\n${userText}\n\nAGORA: ${now}\nTIMEZONE: ${timezone}\n\nTAREFAS ABERTAS (única fonte válida de task_id):\n${JSON.stringify(tasks)}`;
     }
@@ -214,8 +224,10 @@ Deno.serve(async (req) => {
     if (!response.ok) throw new Error(payload?.error?.message || "Falha ao consultar a OpenAI.");
     const text = outputText(payload);
     if (!text) throw new Error("A OpenAI não retornou conteúdo.");
-    return new Response(text, { headers: { ...CORS, "Content-Type": "application/json" } });
+    const result = JSON.parse(text);
+    result.__usedMemories = context.memorias;
+    return new Response(JSON.stringify(result), { headers: { ...CORS, "Content-Type": "application/json" } });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error?.message || String(error) }), { status: 500, headers: { ...CORS, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), { status: 500, headers: { ...CORS, "Content-Type": "application/json" } });
   }
 });

@@ -1,0 +1,8 @@
+# Local project identifier; never links or deploys by itself.
+project_id = "diarionegro-governanca"
+
+[functions.copiloto]
+verify_jwt = true
+
+[functions.reanalisar-historico]
+verify_jwt = true

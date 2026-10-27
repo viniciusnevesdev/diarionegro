@@ -112,14 +112,4 @@
 .dn-used-context button small { color: #777f91; font-size: 9px; }
 @media (max-width: 390px) {
   .dn-memory-two { grid-template-columns: 1fr; }
-  .dn-memory-card-actions button { flex: 1 1 45%; }
-}
-@media (prefers-color-scheme: dark) {
-  .dn-memory-page { --memory-accent: #9cb2ff; }
-  .dn-memory-page, .dn-memory-page.dn-settings-page { background: linear-gradient(180deg, #101522, #0c111d); color: #eef1f8; }
-  .dn-memory-summary, .dn-memory-card, .dn-memory-search, .dn-memory-filter-row select { background: rgba(31,38,55,.88); color: #edf0f8; border-color: rgba(255,255,255,.07); }
-  .dn-memory-card h3, .dn-memory-summary-main strong { color: #f1f3fa; }
-  .dn-memory-search input { color: #edf0f8; }
-  .dn-base-context, .dn-memory-detail-section { background: rgba(35,42,57,.84); }
-  .dn-base-context article, .dn-memory-evidence { background: rgba(20,26,39,.8); }
 }

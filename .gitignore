@@ -13,3 +13,11 @@ SETUP_*
 .bbb-backups/
 tests/__pycache__/
 *.pyc
+
+# Dependências dos testes de integração locais
+tests/node_modules/
+# Pacotes estáticos de publicação preparados localmente
+/dist/
+# Estado local de ferramentas de publicação (sem credenciais no Git)
+supabase/.temp/
+scripts/__pycache__/

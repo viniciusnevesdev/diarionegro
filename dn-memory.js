@@ -191,7 +191,15 @@
     if (duplicate) {
       if (options.source) await addSource(duplicate.id, { ...options.source, relation_type: options.source.relation_type || 'reforco' }, client);
       const nextConfidence = Math.max(Number(duplicate.confidence_current || 0), memory.confidence_current);
+      // Uma correção explicitamente lembrada deve continuar sendo uma decisão humana,
+      // mesmo quando o mesmo texto já existia como candidato ou memória antiga.
+      const explicitCorrection = memory.origem === 'correcao_explicitamente_lembrada' ? {
+        origem: memory.origem, status: 'ativa', ativa: true, confirmed_by_user: true,
+        confirmed_at: new Date().toISOString(), disabled_at: null, disabled_reason: null,
+        correction_reason: memory.correction_reason
+      } : {};
       const { data, error } = await client.from('memorias').update({
+        ...explicitCorrection,
         last_reinforced_at: new Date().toISOString(), confidence_current: nextConfidence,
         confianca: nextConfidence, metadata_json: { ...(duplicate.metadata_json || {}), action_origin: 'deduplicacao' }
       }).eq('user_id', session.user.id).eq('id', duplicate.id).select('*').single();
@@ -375,7 +383,7 @@
     const session = await currentSession(client);
     const limit = Math.min(100, Math.max(1, Number(options.limit) || 60));
     const { data, error } = await client.from('memorias').select('id,texto,tipo,categoria,origem,confidence_current,updated_at')
-      .eq('user_id', session.user.id).in('status', ACTIVE_STATUSES).eq('ativa', true).is('deleted_at', null)
+      .eq('user_id', session.user.id).in('status', ACTIVE_STATUSES).eq('ativa', true).eq('confirmed_by_user', true).is('deleted_at', null)
       .is('merged_into', null).order('confidence_current', { ascending: false }).order('updated_at', { ascending: false }).limit(limit);
     if (error) throw error;
     return (data || []).filter((item) => item.origem !== 'inferencia_ia_nao_confirmada');
@@ -513,21 +521,27 @@
     const settingsCard = $('#openCopilotPhrases')?.closest('.dn-settings-card');
     if (settingsCard) settingsCard.insertAdjacentHTML('beforeend', `
       <button type="button" class="dn-settings-row" id="openMemoryGovernance">
-        <span class="dn-settings-row-copy"><strong>O que o Copiloto sabe sobre mim</strong><small>Audite, corrija, desative e exporte suas memórias.</small></span><span class="dn-settings-chevron">›</span>
+        <span class="dn-settings-row-copy"><strong>O que o Copiloto sabe sobre mim</strong><small>Audite, corrija, desative e exporte suas memórias.</small></span><span class="dn-settings-chevron" aria-hidden="true">${icon('chevron.right')}</span>
       </button>`);
     $('#accountDialog')?.insertAdjacentHTML('beforeend', `
       <section id="dnMemoryPage" class="dn-settings-page dn-memory-page" aria-label="O que o Copiloto sabe sobre mim" hidden>
         <header class="dn-settings-header"><button type="button" class="dn-settings-back" id="dnMemoryBack" aria-label="Voltar para Ajustes"><span class="dn-settings-back-icon">${icon('chevron.right')}</span></button><h1>Memória do Copiloto</h1><button type="button" class="dn-memory-header-action" id="dnMemoryTeach">+ Ensinar</button></header>
         <div class="dn-memory-scroll">
           <section id="dnMemorySummary" class="dn-memory-summary" aria-live="polite"></section>
+          <section id="dnAssociationsSection" class="dn-associations" aria-labelledby="dnAssociationsTitle">
+            <div class="dn-associations-heading"><h2 id="dnAssociationsTitle">Associações</h2><p>Hipóteses da IA sobre relações entre acontecimentos. Confirme e autorize o uso separadamente.</p></div>
+            <div id="dnAssociationsStatus" class="dn-memory-status" role="status" aria-live="polite"></div>
+            <div id="dnAssociationsList" class="dn-associations-list"></div>
+            <button id="dnAssociationsMore" class="dn-memory-more" type="button" hidden>Carregar mais associações</button>
+          </section>
           <section class="dn-memory-toolbar">
-            <label class="dn-memory-search">${icon('magnifyingglass')}<input id="dnMemorySearch" type="search" placeholder="Buscar texto, categoria ou fonte" /></label>
+            <label class="dn-memory-search">${icon('magnifyingglass')}<input id="dnMemorySearch" aria-label="Buscar memórias" type="search" placeholder="Buscar texto, categoria ou fonte" /></label>
             <div class="dn-memory-filter-row">
               <select id="dnMemoryStatus" aria-label="Filtrar por estado"><option value="">Todos os estados</option>${Object.entries(STATUSES).map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select>
               <select id="dnMemoryType" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>${TYPES.map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select>
               <select id="dnMemorySort" aria-label="Ordenar"><option value="updated_desc">Última alteração</option><option value="newest">Mais recente</option><option value="oldest">Mais antiga</option><option value="confidence_desc">Maior confiança</option><option value="confidence_asc">Menor confiança</option><option value="reinforced">Mais reforçada</option><option value="category">Categoria</option></select>
             </div>
-            <details class="dn-memory-advanced-filters"><summary>Mais filtros</summary><div>
+            <details class="dn-memory-advanced-filters"><summary><span>Mais filtros</span>${icon('chevron.right')}</summary><div>
               <label>Categoria<input id="dnMemoryCategoryFilter" type="text" placeholder="Ex.: Casa"></label>
               <label>Origem<select id="dnMemoryOrigin"><option value="">Todas</option>${Object.entries(ORIGINS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></label>
               <label>Confirmação<select id="dnMemoryConfirmed"><option value="">Todas</option><option value="yes">Confirmadas</option><option value="no">Não confirmadas</option></select></label>
@@ -540,11 +554,11 @@
           <div id="dnMemoryStatusLine" class="dn-memory-status" role="status"></div>
           <div id="dnMemoryList" class="dn-memory-list"></div>
           <button id="dnMemoryMore" class="dn-memory-more" type="button" hidden>Carregar mais</button>
-          <details class="dn-base-context"><summary>Contexto-base do Copiloto <span>regras de produto, separado das memórias</span></summary>${BASE_CONTEXT_RULES.map((rule) => `<article><strong>${esc(rule.title)}</strong><p>${esc(rule.text)}</p><small>${esc(rule.source)}</small></article>`).join('')}</details>
+          <details class="dn-base-context"><summary><span class="dn-base-context-heading"><strong>Contexto-base do Copiloto</strong><span>Regras de produto, separadas das memórias</span></span>${icon('chevron.right')}</summary>${BASE_CONTEXT_RULES.map((rule) => `<article><strong>${esc(rule.title)}</strong><p>${esc(rule.text)}</p><small>${esc(rule.source)}</small></article>`).join('')}</details>
         </div>
       </section>`);
     document.body.insertAdjacentHTML('beforeend', `
-      <dialog id="dnMemoryEditor" class="demo-dialog dn-memory-dialog"><form id="dnMemoryForm" class="demo-sheet dn-memory-sheet"><div class="sheet-handle"></div><h2 id="dnMemoryFormTitle">Ensinar algo</h2><input id="dnMemoryId" type="hidden"><label class="field-label">O que devo lembrar?</label><textarea id="dnMemoryText" class="field-input field-textarea" maxlength="2000" required></textarea><div class="dn-memory-two"><label><span class="field-label">Tipo</span><select id="dnMemoryFormType" class="field-input">${TYPES.map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></label><label><span class="field-label">Categoria</span><input id="dnMemoryCategory" class="field-input" value="Outro" maxlength="80"></label></div><label class="field-label">Motivo da correção (opcional)</label><input id="dnMemoryReason" class="field-input" maxlength="240"><div class="sheet-actions"><button type="button" class="secondary-btn" data-close-memory-editor>Cancelar</button><button type="submit" class="primary-btn">Salvar</button></div></form></dialog>
+      <dialog id="dnMemoryEditor" class="demo-dialog dn-memory-dialog"><form id="dnMemoryForm" class="demo-sheet dn-memory-sheet"><div class="sheet-handle"></div><div class="dn-memory-editor-heading"><span class="dn-memory-editor-icon">${icon('brain.head.profile.fill')}</span><div><span class="dn-memory-kicker">MEMÓRIA DO COPILOTO</span><h2 id="dnMemoryFormTitle">Ensinar algo</h2></div></div><input id="dnMemoryId" type="hidden"><label class="field-label" for="dnMemoryText">O que devo lembrar?</label><textarea id="dnMemoryText" class="field-input field-textarea" maxlength="2000" aria-describedby="dnMemoryTextHint" placeholder="Escreva o que você gostaria que o Copiloto lembrasse" required></textarea><small id="dnMemoryTextHint" class="dn-memory-field-hint">Até 2.000 caracteres</small><div class="dn-memory-two"><label><span class="field-label">Tipo</span><select id="dnMemoryFormType" class="field-input">${TYPES.map(([value, label]) => `<option value="${value}">${label}</option>`).join('')}</select></label><label><span class="field-label">Categoria</span><input id="dnMemoryCategory" class="field-input" value="Outro" maxlength="80"></label></div><label class="field-label" for="dnMemoryReason">Motivo da correção (opcional)</label><input id="dnMemoryReason" class="field-input" maxlength="240"><div class="sheet-actions"><button type="button" class="secondary-btn" data-close-memory-editor>Cancelar</button><button type="submit" class="primary-btn">Salvar</button></div></form></dialog>
       <dialog id="dnMemoryDetail" class="demo-dialog dn-memory-dialog"><div class="demo-sheet dn-memory-sheet dn-memory-detail-sheet"><div class="sheet-handle"></div><div id="dnMemoryDetailBody"></div><button type="button" class="secondary-btn sheet-button" data-close-memory-detail>Fechar</button></div></dialog>
       <dialog id="dnMemoryImportPreview" class="demo-dialog dn-memory-dialog"><div class="demo-sheet dn-memory-sheet"><div class="sheet-handle"></div><h2>Revisar importação</h2><div id="dnMemoryImportBody"></div><div class="sheet-actions"><button type="button" class="secondary-btn" data-close-memory-import>Cancelar</button><button type="button" class="primary-btn" id="dnMemoryImportConfirm">Importar revisão</button></div></div></dialog>`);
   }
@@ -566,7 +580,7 @@
     const box = $('#dnMemorySummary');
     try {
       const value = await summary();
-      box.innerHTML = `<div class="dn-memory-summary-main"><strong>${value.active}</strong><span>memórias ativas</span></div><div class="dn-memory-summary-grid"><span><b>${value.pending}</b> aguardando</span><span><b>${value.conflicts}</b> conflitos</span><span><b>${value.disabled}</b> desativadas</span><span><b>${value.deleted}</b> excluídas</span></div><p class="dn-memory-categories">${value.categories.map(([name, count]) => `${esc(name)} (${count})`).join(' · ') || 'Sem categorias ainda'}</p><details class="dn-memory-quality"><summary>Qualidade da memória</summary><div><span><b>${value.noSource}</b> sem fonte</span><span><b>${value.lowConfidence}</b> baixa confiança</span><span><b>${value.stale}</b> antigas sem reforço</span><span><b>${value.neverUsed}</b> nunca usadas</span></div></details><small>Última aprendida: ${formatDate(value.lastLearned)} · última alteração: ${formatDate(value.lastChanged)}</small>`;
+      box.innerHTML = `<div class="dn-memory-summary-main"><strong>${value.active}</strong><span>${value.active === 1 ? 'memória ativa' : 'memórias ativas'}</span></div><div class="dn-memory-summary-grid"><span><b>${value.pending}</b> aguardando</span><span><b>${value.conflicts}</b> conflitos</span><span><b>${value.disabled}</b> desativadas</span><span><b>${value.deleted}</b> excluídas</span></div><p class="dn-memory-categories">${value.categories.map(([name, count]) => `${esc(name)} (${count})`).join(' · ') || 'Sem categorias ainda'}</p><details class="dn-memory-quality"><summary><span>Qualidade da memória</span>${icon('chevron.right')}</summary><div><span><b>${value.noSource}</b> sem fonte</span><span><b>${value.lowConfidence}</b> baixa confiança</span><span><b>${value.stale}</b> antigas sem reforço</span><span><b>${value.neverUsed}</b> nunca usadas</span></div></details><div class="dn-memory-summary-dates"><span>Última aprendida <strong>${formatDate(value.lastLearned)}</strong></span><span>Última alteração <strong>${formatDate(value.lastChanged)}</strong></span></div>`;
     } catch (error) { handleUnavailable(error, box); }
   }
 
@@ -596,11 +610,85 @@
     }
   }
 
+  const ASSOCIATION_STATES = { em_observacao: 'Em observação', confirmada: 'Confirmada', rejeitada: 'Rejeitada' };
+  const ASSOCIATION_ACTIONS = {
+    confirmar: 'Confirmar esta associação? O uso continuará bloqueado até ser autorizado separadamente.',
+    rejeitar: 'Rejeitar esta associação? Seu uso será bloqueado; o registro original não será alterado.',
+    observar: 'Manter esta associação em observação? Seu uso será bloqueado.',
+    permitir_uso: 'Permitir que o Copiloto use esta associação confirmada?',
+    bloquear_uso: 'Bloquear o uso desta associação pelo Copiloto?'
+  };
+  let associationPage = 0;
+  let associationBusy = false;
+
+  async function listAssociations(page = 0, client = appClient()) {
+    const session = await currentSession(client);
+    const start = Math.max(0, page) * PAGE_SIZE;
+    const { data, error, count } = await client.from('associacoes')
+      .select('id,source_record_id,source_type,sujeito,relacao,objeto,evidencia,justificativa,confianca_modelo,estado_humano,uso_permitido,context_version,created_at', { count: 'exact' })
+      .eq('user_id', session.user.id).order('created_at', { ascending: false }).order('id', { ascending: false }).range(start, start + PAGE_SIZE - 1);
+    if (error) throw error;
+    return { data: data || [], count: count ?? 0 };
+  }
+
+  async function decideAssociation(id, action, client = appClient()) {
+    if (!id || !Object.prototype.hasOwnProperty.call(ASSOCIATION_ACTIONS, action)) throw new Error('Ação de associação inválida.');
+    await currentSession(client);
+    const { error } = await client.rpc('dn_associacao_decidir', { p_associacao_id: id, p_acao: action, p_motivo: null });
+    if (error) throw error;
+  }
+
+  function associationCardHtml(item) {
+    const status = ASSOCIATION_STATES[item.estado_humano] || 'Estado desconhecido';
+    const known = Object.prototype.hasOwnProperty.call(ASSOCIATION_STATES, item.estado_humano);
+    const buttons = known ? [
+      item.estado_humano !== 'confirmada' ? '<button type="button" data-association-action="confirmar">Confirmar</button>' : '',
+      item.estado_humano !== 'rejeitada' ? '<button type="button" data-association-action="rejeitar">Rejeitar</button>' : '',
+      item.estado_humano !== 'em_observacao' ? '<button type="button" data-association-action="observar">Manter em observação</button>' : '',
+      item.estado_humano === 'confirmada' ? (item.uso_permitido ? '<button type="button" data-association-action="bloquear_uso">Bloquear uso</button>' : '<button type="button" data-association-action="permitir_uso">Permitir uso</button>') : ''
+    ].join('') : '';
+    return `<article class="dn-memory-card dn-association-card" data-association-id="${esc(item.id)}">
+      <div class="dn-memory-card-top"><span>Associação aprendida pela IA</span><span class="dn-memory-badge">${esc(status)}</span></div>
+      <h3>${esc(item.sujeito)} · ${esc(item.relacao)} · ${esc(item.objeto)}</h3>
+      <div class="dn-memory-meta"><span>${item.uso_permitido && item.estado_humano === 'confirmada' ? 'Uso permitido' : 'Uso bloqueado'}</span><span>Confiança do modelo ${confidencePercent(item.confianca_modelo)}</span></div>
+      <dl class="dn-association-details"><div><dt>Fonte original</dt><dd>${esc(item.source_type)} · registro ${esc(item.source_record_id)}</dd></div><div><dt>Evidência</dt><dd>${esc(item.evidencia)}</dd></div><div><dt>Justificativa</dt><dd>${esc(item.justificativa)}</dd></div></dl>
+      <small>Versão da interpretação: ${esc(item.context_version)} · ${formatDate(item.created_at)}</small>
+      <button class="dn-association-source" type="button" data-association-source="${esc(item.source_record_id)}">Abrir registro original</button>
+      <div class="dn-association-actions">${buttons}</div>
+      <details class="dn-association-history" data-association-history="${esc(item.id)}"><summary>Histórico de decisões</summary><div class="dn-association-history-body"></div></details></article>`;
+  }
+
+  function associationError(error) {
+    return isUnavailableError(error) || ['PGRST202', '42883'].includes(error?.code)
+      ? 'Associações ainda não disponíveis neste banco. A estrutura e a função de decisão precisam estar instaladas.'
+      : (error?.message || 'Não foi possível carregar ou alterar as associações.');
+  }
+
+  async function renderAssociations({ append = false } = {}) {
+    const box = $('#dnAssociationsList'), status = $('#dnAssociationsStatus'), more = $('#dnAssociationsMore');
+    if (!box || !status || !more) return;
+    status.textContent = 'Carregando associações…';
+    more.disabled = true;
+    try {
+      const result = await listAssociations(associationPage);
+      const html = result.data.map(associationCardHtml).join('');
+      if (append) box.insertAdjacentHTML('beforeend', html);
+      else box.innerHTML = html || '<div class="dn-memory-empty"><strong>Nenhuma associação ainda.</strong><p>Novas hipóteses aparecerão aqui após uma reanálise.</p></div>';
+      more.hidden = (associationPage + 1) * PAGE_SIZE >= result.count;
+      status.textContent = `${result.count} ${result.count === 1 ? 'associação' : 'associações'}.`;
+    } catch (error) {
+      if (append) associationPage = Math.max(0, associationPage - 1);
+      else box.innerHTML = '';
+      status.textContent = associationError(error);
+      more.hidden = true;
+    } finally { more.disabled = false; }
+  }
+
   async function openPage() {
     $('#settingsMainPage').hidden = true; $('#copilotPhrasesPage').hidden = true; $('#dnMemoryPage').hidden = false;
     document.documentElement.classList.add('dn-settings-subpage');
-    state.page = 0; state.unavailable = false;
-    await Promise.all([renderSummary(), renderList()]);
+    state.page = 0; state.unavailable = false; associationPage = 0;
+    await Promise.all([renderSummary(), renderList(), renderAssociations()]);
   }
 
   function closePage() {
@@ -633,11 +721,48 @@
     } catch (error) { body.innerHTML = `<p class="form-error">${esc(error?.message || String(error))}</p>`; }
   }
 
-  async function refreshUi() { state.page = 0; await Promise.all([renderSummary(), renderList()]); }
+  async function refreshUi() { state.page = 0; associationPage = 0; await Promise.all([renderSummary(), renderList(), renderAssociations()]); }
 
   function bindUi() {
     $('#openMemoryGovernance')?.addEventListener('click', openPage);
     $('#dnMemoryBack')?.addEventListener('click', closePage);
+    $('#dnAssociationsList')?.addEventListener('toggle', async (event) => {
+      const details = event.target;
+      if (!details.matches('[data-association-history]') || !details.open || details.dataset.loaded) return;
+      const body = details.querySelector('.dn-association-history-body');
+      body.textContent = 'Carregando histórico…';
+      try {
+        const session = await currentSession();
+        const { data, error } = await appClient().from('associacao_historico').select('acao,motivo,metadata_json,created_at')
+          .eq('user_id', session.user.id).eq('associacao_id', details.dataset.associationHistory)
+          .order('created_at', { ascending: false }).limit(50);
+        if (error) throw error;
+        const labels = { criada:'Criada', reencontrada:'Reencontrada', confirmada:'Confirmada', rejeitada:'Rejeitada', em_observacao:'Em observação', uso_permitido:'Uso permitido', uso_bloqueado:'Uso bloqueado', editada:'Editada' };
+        body.innerHTML = (data || []).map(row => `<p><strong>${esc(labels[row.acao] || row.acao)}</strong> · ${formatDate(row.created_at)}${row.motivo ? `<br>${esc(row.motivo)}` : ''}${row.metadata_json?.evidencia ? `<br>Evidência do reencontro: ${esc(row.metadata_json.evidencia)}` : ''}</p>`).join('') || 'Nenhuma decisão registrada.';
+        details.dataset.loaded = 'true';
+      } catch (error) { body.textContent = associationError(error); }
+    }, true);
+    $('#dnAssociationsMore')?.addEventListener('click', () => { associationPage += 1; renderAssociations({ append: true }); });
+    $('#dnAssociationsList')?.addEventListener('click', async (event) => {
+      const source = event.target.closest('[data-association-source]');
+      if (source) {
+        window.dispatchEvent(new CustomEvent('dn:open-record', { detail: { recordId: source.dataset.associationSource } }));
+        $('#accountDialog')?.close(); return;
+      }
+      const button = event.target.closest('[data-association-action]');
+      const card = button?.closest('[data-association-id]');
+      const action = button?.dataset.associationAction;
+      if (!card || !Object.prototype.hasOwnProperty.call(ASSOCIATION_ACTIONS, action) || associationBusy) return;
+      if (!window.confirm(ASSOCIATION_ACTIONS[action])) return;
+      associationBusy = true;
+      card.querySelectorAll('button').forEach((item) => { item.disabled = true; });
+      $('#dnAssociationsStatus').textContent = 'Salvando decisão…';
+      try {
+        await decideAssociation(card.dataset.associationId, action);
+        associationPage = 0; await renderAssociations();
+      } catch (error) { $('#dnAssociationsStatus').textContent = associationError(error); }
+      finally { associationBusy = false; card.querySelectorAll('button').forEach((item) => { item.disabled = false; }); }
+    });
     $('#dnMemoryTeach')?.addEventListener('click', () => openEditor());
     $('[data-close-memory-editor]')?.addEventListener('click', () => $('#dnMemoryEditor').close());
     $('[data-close-memory-detail]')?.addEventListener('click', () => $('#dnMemoryDetail').close());
@@ -726,7 +851,7 @@
     normalizeText, fingerprint, canonicalKey, detectPotentialConflict, sanitizedMemory, provenanceText, isUnavailableError,
     create, createExplicit, createCorrection, createCandidate, addSource, list, summary, detail, update,
     confirm, unconfirm, disable, reactivate, softDelete, restore, permanentDelete, merge,
-    contextRules, recordUses, exportAll, exportMarkdown, validateImport, previewImport, importReviewed, migrateLegacy,
+    contextRules, recordUses, listAssociations, decideAssociation, exportAll, exportMarkdown, validateImport, previewImport, importReviewed, migrateLegacy,
     open: openPage, openDetail: renderDetail, refresh: refreshUi
   };
 

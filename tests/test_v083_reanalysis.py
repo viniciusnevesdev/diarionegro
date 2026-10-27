@@ -11,7 +11,7 @@ SYMBOLS=(ROOT/'dn-symbols.js').read_text(encoding='utf-8')
 
 def test_permanent_modes():
     for x in ['desatualizados','nunca_analisados','periodo','tudo']: assert x in JS and x in MIG
-    assert "VERSION = '0.8.3-reanalysis-v1'" in JS
+    assert "VERSION = '0.8.3-reanalysis-v2'" in JS
 
 def test_only_raw_inputs():
     m=re.search(r"const INPUTS = \[[^;]+;",JS).group(0)
@@ -24,7 +24,8 @@ def test_never_recreates_tasks():
 
 def test_inference_confirmation():
     assert 'inferencia' in EDGE and 'declaracao_clara' in EDGE
-    assert 'createCandidate' in JS
+    assert 'saveAssociations' in JS
+    assert 'window.DN_MEMORY.createCandidate' not in JS
 
 def test_version_history_and_runs():
     assert 'interpretacoes_historico' in MIG and 'reanalisacoes' in MIG
@@ -46,10 +47,18 @@ def test_css_uses_tokens():
     assert ':root' not in CSS
 
 def test_overlay_preserves_existing_memory_api():
-    assert 'window.DN_MEMORY.create' in JS
-    assert 'window.DN_MEMORY.createCandidate' in JS
+    assert 'window.DN_MEMORY.create(' not in JS
+    assert 'window.DN_MEMORY.createCandidate(' not in JS
     assert 'window.DN_MEMORY.refresh' in JS
 
 def test_edge_is_dedicated():
     assert 'reanalisar-historico' in str(ROOT/'supabase/functions/reanalisar-historico/index.ts')
-    assert 'VERSION="0.8.3-reanalysis-v1"' in EDGE
+    assert 'VERSION="0.8.3-reanalysis-v2"' in EDGE
+
+
+def load_tests(loader, suite, pattern):
+    import unittest
+    for name, value in sorted(globals().items()):
+        if name.startswith('test_') and callable(value):
+            suite.addTest(unittest.FunctionTestCase(value, description=name))
+    return suite

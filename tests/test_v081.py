@@ -1,5 +1,5 @@
 import pathlib
-import subprocess
+from js_runtime import evaluate_browser, parse_browser
 import unittest
 
 
@@ -11,20 +11,8 @@ class V081Tests(unittest.TestCase):
         return (ROOT / path).read_text(encoding="utf-8")
 
     def test_browser_javascript_parses(self):
-        parser = (
-            "ObjC.import('Foundation');"
-            "function run(argv){"
-            "const s=$.NSString.stringWithContentsOfFileEncodingError(argv[0],$.NSUTF8StringEncoding,null).js;"
-            "new Function(s); return 'ok';}"
-        )
-        for filename in ["app.js", "dn-interpretations.js", "copiloto.js", "dn-ai.js"]:
-            result = subprocess.run(
-                ["osascript", "-l", "JavaScript", "-e", parser, str(ROOT / filename)],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(result.returncode, 0, f"{filename}: {result.stderr}")
+        for filename in ['app.js', 'dn-interpretations.js', 'copiloto.js', 'dn-ai.js']:
+            parse_browser(ROOT / filename)
 
     def test_migration_has_owner_rls_and_minimum_grants(self):
         sql = self.read("supabase/migrations/20261024140000_create_interpretacoes.sql").lower()
@@ -65,26 +53,14 @@ class V081Tests(unittest.TestCase):
         self.assertIn("window.DN_APP_API.startTask(taskId)", shared)
         self.assertIn("window.DN_APP_API.editTask(taskId", shared)
 
-        behavior = (
-            "ObjC.import('Foundation');"
-            "function run(argv){"
-            "globalThis.window={DN_APP_API:{getTasks:()=>[{id:'task-real',title:'Pegar receitas no médico',status:'open'},{id:'task-done',title:'Resolvida',status:'done'}]}};"
-            "const s=$.NSString.stringWithContentsOfFileEncodingError(argv[0],$.NSUTF8StringEncoding,null).js;eval(s);"
-            "const p=window.DN_INTERPRETATIONS.planTaskActions({acoes_tarefas:["
-            "{acao:'concluir',task_id:'task-real',novo_titulo:'',confianca:.96},"
-            "{acao:'concluir',task_id:'invented',novo_titulo:'',confianca:.99},"
-            "{acao:'concluir',task_id:'task-done',novo_titulo:'',confianca:.99},"
-            "{acao:'editar',task_id:'task-real',novo_titulo:'',confianca:.99}"
-            "]});return JSON.stringify(p.map(x=>x.valid));}"
-        )
-        result = subprocess.run(
-            ["osascript", "-l", "JavaScript", "-e", behavior, str(ROOT / "dn-interpretations.js")],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), "[true,false,false,false]")
+        setup = "window.DN_APP_API={getTasks:()=>[{id:'task-real',title:'Pegar receitas no médico',status:'open'},{id:'task-done',title:'Resolvida',status:'done'}]};"
+        expression = """window.DN_INTERPRETATIONS.planTaskActions({acoes_tarefas:[
+          {acao:'concluir',task_id:'task-real',novo_titulo:'',confianca:.96},
+          {acao:'concluir',task_id:'invented',novo_titulo:'',confianca:.99},
+          {acao:'concluir',task_id:'task-done',novo_titulo:'',confianca:.99},
+          {acao:'editar',task_id:'task-real',novo_titulo:'',confianca:.99}
+        ]}).map(x=>x.valid)"""
+        self.assertEqual(evaluate_browser(ROOT / 'dn-interpretations.js', expression, setup), [True, False, False, False])
 
     def test_new_task_flow_is_preserved(self):
         copilot = self.read("copiloto.js")
