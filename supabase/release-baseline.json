@@ -1,0 +1,61 @@
+{
+  "confirmed_by": "user: remote schema and migration history checked",
+  "baseline": [
+    {
+      "version": "20261024181522",
+      "name": "station_202610240001",
+      "local_source": null,
+      "sha256": null
+    },
+    {
+      "version": "20261024204437",
+      "name": "create_interpretacoes",
+      "local_source": "20261024140000_create_interpretacoes.sql",
+      "sha256": "954e9f7481c31dd5d96c3d89ff613dd6da894819658a2f104dca56d76445d258"
+    },
+    {
+      "version": "20261024204521",
+      "name": "create_memorias_governanca",
+      "local_source": "20261024170000_create_memorias_governanca.sql",
+      "sha256": "232854763ba3322e1552bb4082303e254886846598d480b8b284a2ec03371623"
+    },
+    {
+      "version": "20261024224404",
+      "name": "create_reanalise_historica_v083",
+      "local_source": "20261024223500_create_reanalise_historica.sql",
+      "sha256": "49a8de954180219997712c1f1874f674666ae78ec944b2478ebfd41c141c79eb"
+    }
+  ],
+  "pending": [
+    {
+      "version": "20261027120000",
+      "name": "create_associacoes_governanca",
+      "local_source": "20261027120000_create_associacoes_governanca.sql",
+      "sha256": "814a48a2593e3d966fbb530921c9f4275461de50813f1149d179088ad32d9ff9"
+    },
+    {
+      "version": "20261027130000",
+      "name": "associacoes_reencontros",
+      "local_source": "20261027130000_associacoes_reencontros.sql",
+      "sha256": "4d7e30f39e0dda5ec0654fd12f29d30752d2a5ad9d344802769fe42bedad9768"
+    },
+    {
+      "version": "20261027140000",
+      "name": "contexto_copiloto_autorizado",
+      "local_source": "20261027140000_contexto_copiloto_autorizado.sql",
+      "sha256": "efbbf55a2b3686b5c6110e9eaee98c9c62d65578454eb75067b7214051be367a"
+    },
+    {
+      "version": "20261027150000",
+      "name": "contexto_sem_exclusao_global",
+      "local_source": "20261027150000_contexto_sem_exclusao_global.sql",
+      "sha256": "c135de3bab681f8ccd5d90bc4013738292920f3aeafad8409c6adca2ca68c137"
+    },
+    {
+      "version": "20261027160000",
+      "name": "memoria_auditoria_cascata",
+      "local_source": "20261027160000_memoria_auditoria_cascata.sql",
+      "sha256": "4da997ed55d9e89edc522955fb4d146f031c35c7edda6881ce2cf47ab225e074"
+    }
+  ]
+}

@@ -179,7 +179,7 @@
       }
 
       const response = await client.functions.invoke('copiloto', {
-        body: { modo: 'interpretar', id: id || null, texto: text, regras: window.DN_COPILOT?.getRules?.() || [], ...(window.DN_INTERPRETATIONS?.requestContext?.() || {}) }
+        body: { modo: 'interpretar', id: id || null, texto: text, ...(window.DN_INTERPRETATIONS?.requestContext?.() || {}) }
       });
 
       if (response.error) throw response.error;

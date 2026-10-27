@@ -1,0 +1,13 @@
+{
+  "name": "diarionegro-governanca-validation",
+  "private": true,
+  "scripts": { "validate": "node validate_integrated.cjs" },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.76.1",
+    "deno": "2.5.6",
+    "esbuild": "0.25.11",
+    "pg": "8.16.3",
+    "playwright": "1.56.1",
+    "typescript": "5.9.3"
+  }
+}

@@ -12,9 +12,6 @@
   const MOOD_STALE_MS = 48 * 60 * 60 * 1000;
 
   let client = null;
-  let learnedRules = [];
-  let learnedMemoryIds = [];
-  let learnedMemories = [];
   let recentEmotions = [];
   let activeSession = readJson(SESSION_KEY, null);
   let lastResult = null;
@@ -70,37 +67,8 @@
     return row;
   }
 
-  async function loadLearnedContext() {
-    if (!client) return;
-    const { data: auth } = await client.auth.getSession();
-    if (!auth?.session) return;
-    if (window.DN_MEMORY?.contextRules) {
-      try {
-        const memories = await window.DN_MEMORY.contextRules({ limit: MAX_RULES }, client);
-        learnedRules = memories.map((memory) => String(memory.texto));
-        learnedMemoryIds = memories.map((memory) => memory.id);
-        learnedMemories = memories.map((memory) => ({ id: memory.id, texto: memory.texto, categoria: memory.categoria, origem: memory.origem }));
-        return;
-      } catch (error) {
-        if (!window.DN_MEMORY.isUnavailableError?.(error)) console.warn('Memória estruturada indisponível; usando fallback legado.', error);
-      }
-    }
-    const { data } = await client.from('registros')
-      .select('registrado_em,texto_original,entrada')
-      .in('entrada', ['memoria_ia', 'correcao_ia'])
-      .order('registrado_em', { ascending: false }).limit(100);
-    const rules = [];
-    for (const row of data || []) {
-      const p = parsePayload(row.texto_original);
-      if (!p) continue;
-      if (row.entrada === 'memoria_ia' && p.texto) rules.push(String(p.texto));
-      if (row.entrada === 'correcao_ia' && p.remember && p.lesson) rules.push(String(p.lesson));
-      if (rules.length >= MAX_RULES) break;
-    }
-    learnedRules = [...new Set(rules)];
-    learnedMemoryIds = [];
-    learnedMemories = [];
-  }
+  // O contexto é montado no servidor a cada chamada, sem cache ou fallback legado.
+  async function loadLearnedContext() {}
 
   async function saveMemoryWithFallback(input, options = {}) {
     if (window.DN_MEMORY?.create) {
@@ -407,7 +375,7 @@
 
   async function invokeCopilot(body) {
     await ensureSession();
-    const { data, error } = await client.functions.invoke('copiloto', { body: { ...body, regras: learnedRules } });
+    const { data, error } = await client.functions.invoke('copiloto', { body });
     if (error) throw error;
     if (!data || typeof data !== 'object') throw new Error('A IA respondeu sem dados válidos.');
     return data;
@@ -439,8 +407,6 @@
         if (error) throw error;
       }
       const result = await invokeCopilot({ modo: 'interpretar', texto: text, ...interpretationContext() });
-      result.__usedMemories = learnedMemories.map((memory) => ({ ...memory }));
-      await window.DN_MEMORY?.recordUses?.(learnedMemoryIds, sourceRecord.id, 'interpretar', { source: 'copiloto_texto' }, client).catch(() => {});
       await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: false }, client);
       await processInterpretation(result, sourceRecord?.id || uid('src'));
       await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: true }, client);
@@ -464,9 +430,7 @@
       await loadLearnedContext();
       const note = String($('#dnPhotoNote')?.value || '').trim();
       const result = await invokeCopilot({ modo: 'interpretar', texto: note, imagem_data_url: prepared.dataUrl, ...interpretationContext() });
-      result.__usedMemories = learnedMemories.map((memory) => ({ ...memory }));
       const photoSourceId = uid('foto');
-      await window.DN_MEMORY?.recordUses?.(learnedMemoryIds, photoSourceId, 'interpretar', { source: 'copiloto_foto' }, client).catch(() => {});
       await processInterpretation(result, photoSourceId);
       renderResult(result);
       resetInputOnNextOpen = true;
@@ -1039,7 +1003,7 @@
 
   window.DN_COPILOT = {
     openInput,
-    getRules: () => [...learnedRules],
+    getRules: () => [],
     refreshRules: loadLearnedContext,
     chooseNow,
     checkMood: () => maybePromptMood({ force: true })
