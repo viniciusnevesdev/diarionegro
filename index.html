@@ -69,10 +69,7 @@
 
     <section class="section-block habits-section">
       <div class="section-heading">
-        <div style="display:flex;align-items:center;gap:10px;min-width:0">
-          <h2>Hábitos & metas</h2>
-          <button type="button" class="text-btn" id="toggleHabitsHome" aria-controls="habitGrid" aria-expanded="true" aria-label="Ocultar hábitos e metas">Ocultar</button>
-        </div>
+        <h2>Hábitos & metas</h2>
         <button type="button" class="text-btn" id="openHabitsManager">Ver todos <span data-dn-symbol="chevron.right"></span></button>
       </div>
 
@@ -383,6 +380,18 @@
         <section class="dn-settings-section">
           <div class="dn-settings-section-title">TELA INICIAL</div>
           <div class="dn-settings-card glass-card">
+            <label class="dn-settings-toggle-row" for="showHabitsHomeToggle">
+              <span class="dn-settings-row-copy">
+                <strong>Mostrar hábitos e metas</strong>
+                <small>Exibe a seção de hábitos e metas na tela inicial.</small>
+              </span>
+              <span class="dn-switch">
+                <input type="checkbox" id="showHabitsHomeToggle" checked aria-label="Mostrar hábitos e metas" />
+                <span class="dn-switch-track" aria-hidden="true">
+                  <span class="dn-switch-thumb"></span>
+                </span>
+              </span>
+            </label>
             <label class="dn-settings-toggle-row" for="showRecentNotesToggle">
               <span class="dn-settings-row-copy">
                 <strong>Mostrar últimas anotações</strong>
@@ -459,22 +468,25 @@
 
   <script>
     (() => {
-      const button = document.getElementById('toggleHabitsHome');
-      const grid = document.getElementById('habitGrid');
-      if (!button || !grid) return;
+      const toggle = document.getElementById('showHabitsHomeToggle');
+      const section = document.querySelector('#homeView .habits-section');
+      if (!toggle || !section) return;
       const key = 'dn-hide-habits-home-v1';
       let hidden = false;
       try { hidden = localStorage.getItem(key) === '1'; } catch {}
       function render() {
-        grid.hidden = hidden;
-        grid.style.display = hidden ? 'none' : '';
-        button.textContent = hidden ? 'Mostrar' : 'Ocultar';
-        button.setAttribute('aria-expanded', String(!hidden));
-        button.setAttribute('aria-label', (hidden ? 'Mostrar' : 'Ocultar') + ' hábitos e metas');
+        section.hidden = hidden;
+        section.style.display = hidden ? 'none' : '';
+        toggle.checked = !hidden;
       }
-      button.addEventListener('click', () => {
-        hidden = !hidden;
+      toggle.addEventListener('change', () => {
+        hidden = !toggle.checked;
         try { localStorage.setItem(key, hidden ? '1' : '0'); } catch {}
+        render();
+      });
+      window.addEventListener('storage', (event) => {
+        if (event.key !== key) return;
+        hidden = event.newValue === '1';
         render();
       });
       render();
