@@ -94,7 +94,7 @@
       const confidence = Number(proposal?.confianca || 0);
       const validAction = ['iniciar', 'concluir', 'editar'].includes(action);
       const validEdit = action !== 'editar' || Boolean(String(proposal?.novo_titulo || '').trim());
-      const valid = available.has(taskId) && !touched.has(taskId) && confidence >= AUTO_ACTION_CONFIDENCE && validAction && validEdit;
+      const valid = action !== 'concluir' && available.has(taskId) && !touched.has(taskId) && confidence >= AUTO_ACTION_CONFIDENCE && validAction && validEdit;
       if (valid) touched.add(taskId);
       return { proposal, taskId, action, confidence, valid };
     });

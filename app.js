@@ -367,6 +367,29 @@
       return { created: false, exists: Boolean(existing), deleted: !existing, task: existing };
     }
 
+    // DN_LOTE2_DEDUP_EXATA_V1: apenas equivalência textual; sem mesclar por semelhança vaga.
+    const titleKey = (value) => String(value || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+    const existingOpen = tasks.find((task) => !task.deleted && task.status !== 'done'
+      && titleKey(task.title) === titleKey(cleanTitle));
+    if (existingOpen) {
+      // Correções explícitas e prioridades mais altas já existentes prevalecem.
+      const incomingPriority = Number(priority);
+      const presentPriority = Number(existingOpen.priority ?? 5);
+      const explanation = String(priorityReason || '').trim();
+      if (!existingOpen.corrected_by_user && Number.isInteger(incomingPriority)
+          && incomingPriority > presentPriority && incomingPriority <= 10 && explanation) {
+        await insertStructuredEvent('tarefa_editada', {
+          task_id: existingOpen.id, priority: incomingPriority, priority_reason: explanation,
+          ia_source_record_id: sourceId || null
+        });
+        await loadAppState();
+      }
+      return { created: false, exists: true, deleted: false,
+        task: tasks.find((task) => task.id === existingOpen.id) || existingOpen };
+    }
+
     await insertStructuredEvent('tarefa_criada', {
       task_id: id, title: cleanTitle, created_at: new Date().toISOString(),
       source: 'ia', source_record_id: sourceId || null,

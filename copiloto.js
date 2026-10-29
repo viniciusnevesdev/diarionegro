@@ -499,7 +499,7 @@
       </article>`).join('');
     const taskActions = (result.acoes_tarefas || []).map((action) => {
       const applied = (result.__taskActionRefs || []).find((item) => item.taskId === action.task_id && item.action === action.acao)?.applied;
-      const label = action.acao === 'concluir' ? 'Tarefa concluída' : action.acao === 'iniciar' ? 'Tarefa iniciada' : 'Tarefa atualizada';
+      const label = action.acao === 'concluir' ? (applied ? 'Tarefa concluída' : 'Conclusão bloqueada') : action.acao === 'iniciar' ? 'Tarefa iniciada' : 'Tarefa atualizada';
       return `<article class="dn-result-card dn-result-task-action"><div class="dn-result-card-icon">${icon(applied ? 'checkmark.circle.fill' : 'exclamationmark.circle.fill')}</div><div class="dn-result-main"><div class="dn-result-top"><span>Ação em tarefa existente</span><b>${applied ? 'aplicada' : 'não aplicada'}</b></div><strong>${esc(label)}: ${esc(action.titulo_referencia)}</strong><p>${esc(action.evidencia || '')}</p></div></article>`;
     }).join('');
     const tasks = (result.tarefas || []).map((t, i) => `

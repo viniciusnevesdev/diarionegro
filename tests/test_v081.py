@@ -60,7 +60,7 @@ class V081Tests(unittest.TestCase):
           {acao:'concluir',task_id:'task-done',novo_titulo:'',confianca:.99},
           {acao:'editar',task_id:'task-real',novo_titulo:'',confianca:.99}
         ]}).map(x=>x.valid)"""
-        self.assertEqual(evaluate_browser(ROOT / 'dn-interpretations.js', expression, setup), [True, False, False, False])
+        self.assertEqual(evaluate_browser(ROOT / 'dn-interpretations.js', expression, setup), [False, False, False, False])
 
     def test_new_task_flow_is_preserved(self):
         copilot = self.read("copiloto.js")
