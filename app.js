@@ -448,7 +448,7 @@
       <article class="note-card timeline-card ${timelineClassFor(row.id)}" data-record-id="${escapeHtml(row.id)}">
         <div class="note-meta">
           <span>${escapeHtml(formatTimelineDate(row.registrado_em))}</span>
-          <span class="timeline-origin">${escapeHtml(row.origem === 'atalho' ? 'ATALHO' : 'PWA')}</span>
+          <span class="timeline-origin">${escapeHtml(row.origem === 'atalho' ? 'ATALHO' : (row.origem === 'estacao_casa' ? 'ESTAÇÃO CASA' : 'PWA'))}</span>
         </div>
         <p>${escapeHtml(row.texto_original)}</p>
       </article>`;
