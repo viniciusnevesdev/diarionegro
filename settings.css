@@ -569,3 +569,54 @@ html.dn-settings-open body {
   height: 15px !important;
 }
 
+
+/* DN_STT_PROVIDER_SWITCH_V1 — duas opções compactas, sem mudanças nos outros ajustes. */
+.dn-stt-setting {
+  border: 0;
+  border-top: 1px solid rgba(68,76,97,.10);
+  min-width: 0;
+  margin: 0;
+  padding: 13px 14px 12px;
+}
+.dn-stt-setting legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.dn-stt-setting #dnSttDescription {
+  clear: both;
+  margin: 0 0 10px;
+  color: rgba(46,52,70,.64);
+  font-size: 12px;
+}
+.dn-stt-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.dn-stt-option { position: relative; display: block; min-width: 0; }
+.dn-stt-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.dn-stt-option span {
+  display: block;
+  padding: 9px 8px;
+  border: 1px solid rgba(68,76,97,.18);
+  border-radius: 10px;
+  background: rgba(255,255,255,.65);
+  font-size: 13px;
+  font-weight: 650;
+  text-align: center;
+  cursor: pointer;
+}
+.dn-stt-option input:checked + span {
+  background: rgba(105,80,188,.12);
+  border-color: rgba(105,80,188,.52);
+  color: #443280;
+}
+.dn-stt-option input:focus-visible + span { outline: 2px solid #6950bc; outline-offset: 2px; }
+.dn-stt-option input:disabled + span { opacity: .55; cursor: progress; }
+.dn-stt-status { margin: 8px 0 0; color: rgba(46,52,70,.65); font-size: 11px; line-height: 1.35; }
+.dn-stt-status[data-kind="error"] { color: #b63a3a; }
+.dn-stt-status[data-kind="success"] { color: #396c55; }

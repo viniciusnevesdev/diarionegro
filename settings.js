@@ -455,8 +455,97 @@
 
   loadRecentNotesPreference();
 
+  /* DN_STT_PROVIDER_SWITCH_V1: seleciona provedor compartilhado, sem mexer nas chaves. */
+  const sttRadios = [...document.querySelectorAll('input[name="dnTranscriptionProvider"]')];
+  const sttStatus = document.getElementById("dnSttStatus");
+  let selectedStt = "elevenlabs";
+  let sttBusy = false;
+  let sttLoaded = false;
+
+  function showStt(value) {
+    const next = value === "openai" ? "openai" : "elevenlabs";
+    sttRadios.forEach((radio) => {
+      radio.checked = radio.value === next;
+    });
+  }
+
+  function sttMessage(message, kind = "") {
+    if (!sttStatus) return;
+    sttStatus.textContent = message;
+    sttStatus.dataset.kind = kind;
+  }
+
+  function busyStt(busy) {
+    sttBusy = busy;
+    sttRadios.forEach((radio) => { radio.disabled = busy; });
+  }
+
+  async function sttUserAndClient() {
+    const client = window.DN_APP_API?.getClient?.();
+    if (!client) throw Error("Supabase indisponível.");
+    const { data, error } = await client.auth.getUser();
+    if (error || !data?.user?.id) throw Error("Entre na sua conta para alterar esta opção.");
+    return { client, uid: data.user.id };
+  }
+
+  async function loadSttProvider() {
+    if (!sttRadios.length || sttBusy) return;
+    busyStt(true);
+    sttMessage("Consultando Supabase…");
+    try {
+      const {client, uid} = await sttUserAndClient();
+      const {data, error} = await client.from("audio_transcricao_preferencias")
+        .select("provedor").eq("owner_id", uid).maybeSingle();
+      if (error) throw error;
+      const provider = data?.provedor ?? "elevenlabs";
+      if (!["elevenlabs", "openai"].includes(provider)) throw Error("Configuração inválida.");
+      selectedStt = provider;
+      showStt(provider);
+      sttLoaded = true;
+      sttMessage(provider === "elevenlabs" ? "Ativo: ElevenLabs Scribe v2" : "Ativo: OpenAI GPT-4o Transcribe", "success");
+    } catch (error) {
+      sttLoaded = false;
+      showStt(selectedStt);
+      sttMessage("Não foi possível consultar o Supabase. Tente abrir os Ajustes novamente.", "error");
+    } finally { busyStt(false); }
+  }
+
+  async function saveSttProvider(provider) {
+    if (sttBusy || !sttLoaded || !["elevenlabs", "openai"].includes(provider)) {
+      showStt(selectedStt); return;
+    }
+    if (provider === selectedStt) return;
+    const before = selectedStt;
+    busyStt(true);
+    sttMessage("Salvando no Supabase…");
+    try {
+      const {client, uid} = await sttUserAndClient();
+      const {data, error} = await client.from("audio_transcricao_preferencias")
+        .upsert({owner_id: uid, provedor: provider}, {onConflict:"owner_id"})
+        .select("provedor").single();
+      if (error || data?.provedor !== provider) throw (error || Error("Resposta não confirmada."));
+      selectedStt = provider;
+      showStt(provider);
+      sttMessage(provider === "elevenlabs"
+        ? "Salvo: ElevenLabs Scribe v2. Vale para as próximas gravações."
+        : "Salvo: OpenAI GPT-4o Transcribe. Vale para as próximas gravações.", "success");
+    } catch (_) {
+      selectedStt = before;
+      showStt(before);
+      sttMessage("Não foi possível salvar. A escolha anterior foi mantida.", "error");
+    } finally { busyStt(false); }
+  }
+
+  sttRadios.forEach((radio) =>
+    radio.addEventListener("change", () => {
+      if (radio.checked) saveSttProvider(radio.value);
+    })
+  );
+  accountButton?.addEventListener("click", loadSttProvider);
+
   window.DN_SETTINGS = {
     openPhrases: showPhrasesPage,
-    reloadPhrases: readRemotePhrases
+    reloadPhrases: readRemotePhrases,
+    reloadSttProvider: loadSttProvider
   };
 })();

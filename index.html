@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="tokens.css?v=20261027-060612-806406" />
   <link rel="stylesheet" href="style.css?v=20261027-060612-806406" />
   <link rel="stylesheet" href="copiloto.css?v=20261027-060612-806406" />
-  <link rel="stylesheet" href="settings.css?v=20261024-204653" />
+  <link rel="stylesheet" href="settings.css?v=20261109-stt-switch-1" />
   <link rel="stylesheet" href="dn-memory.css?v=20261027-governanca-final" />
   <link rel="stylesheet" href="dn-memory-v083.css?v=20261027-governanca-final" />
   <!-- DN_VERSION_SYSTEM_START -->
@@ -374,6 +374,22 @@
               </span>
               <span class="dn-settings-chevron">›</span>
             </button>
+            <!-- DN_STT_PROVIDER_SWITCH_V1: mesma escolha para Copiloto e Atalho Áudio Notas. -->
+            <fieldset class="dn-stt-setting" aria-describedby="dnSttDescription dnSttStatus">
+              <legend>Transcrição de áudio</legend>
+              <p id="dnSttDescription">Usado no Copiloto e no Atalho Áudio Notas.</p>
+              <div class="dn-stt-options">
+                <label class="dn-stt-option">
+                  <input type="radio" name="dnTranscriptionProvider" value="elevenlabs" checked />
+                  <span>ElevenLabs</span>
+                </label>
+                <label class="dn-stt-option">
+                  <input type="radio" name="dnTranscriptionProvider" value="openai" />
+                  <span>OpenAI</span>
+                </label>
+              </div>
+              <p id="dnSttStatus" class="dn-stt-status" role="status" aria-live="polite">Carregando preferência…</p>
+            </fieldset>
           </div>
         </section>
 
@@ -502,7 +518,7 @@
   <script src="glass-system.js?v=20261027-060612-806406"></script>
   <script src="version-check.js?v=20261027-060612-806406"></script>
   <script src="copiloto.js?v=20261029-tarefas-seguras-v1"></script>
-  <script src="settings.js?v=20261024-204653"></script>
+  <script src="settings.js?v=20261109-stt-switch-1"></script>
   <!-- DN_FEATURES_V07_AI_TIMELINE -->
   <script src="dn-ai.js?v=20261027-060612-806406"></script>
 </body>
