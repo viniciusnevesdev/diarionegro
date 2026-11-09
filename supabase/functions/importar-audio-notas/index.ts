@@ -50,8 +50,29 @@ async function sha256(buffer) {
   const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", buffer));
   return [...hash].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+// A data presente no nome da gravação tem prioridade sobre a criação do arquivo,
+// que pode mudar durante cópia/importação. Suporta DN_2026-11-09_04-25-30.m4a.
+// Um nome sem data válida recorre a capturado_em (metadado do Atalhos).
+function captureFromFileName(name, fallback) {
+  const match = String(name || "").match(/(?:^|[^0-9])(\d{4})-(\d{2})-(\d{2})[_T ](\d{2})[-:](\d{2})[-:](\d{2})(?:[^0-9]|$)/);
+  if (!match) return null;
+  const [,year,month,day,hour,minute,second] = match;
+  // Captura por nome não carrega fuso; adota o offset informado pelo iPhone,
+  // ou -03:00 (São Paulo), configurado neste projeto.
+  const offset = String(fallback || "").match(/([+-]\d{2}:\d{2}|Z)$/)?.[1] || "-03:00";
+  const label = year + "-" + month + "-" + day + "T" + hour + ":" + minute + ":" + second;
+  const date = new Date(label + offset);
+  if (!Number.isFinite(date.getTime())) throw Error("invalid_filename_date");
+  const offsetMinutes = offset === "Z" ? 0 : ((offset[0] === "-" ? -1 : 1) *
+    (Number(offset.slice(1,3)) * 60 + Number(offset.slice(4,6))));
+  const check = new Date(date.getTime() + offsetMinutes * 60000).toISOString().slice(0,19);
+  if (check !== label) throw Error("invalid_filename_date");
+  return date;
+}
+
 async function run(req) {
-  if (req.method === "GET") return send(200, { ok: true, project: "atalho-audio-notas", transcription: "elevenlabs-scribe_v2", status: "online" });
+  if (req.method === "GET") return send(200, { ok: true, project: "atalho-audio-notas", transcription: "elevenlabs_scribe_v2_or_openai_gpt4o_transcribe", status: "online" });
   if (req.method !== "POST") return send(405, { ok: false, error: "method_not_allowed" });
   const token = req.headers.get("x-audio-token") || "";
   if (token.length < 40 || token.length > 250) return send(401, { ok: false, error: "unauthorized" });
@@ -102,14 +123,22 @@ async function run(req) {
   const file = form.get("audio") || form.get("file");
   if (!(file instanceof File) || file.size < 1000 || file.size > MAX_AUDIO)
     return send(400, { ok: false, error: "invalid_audio" });
+  const fileName = String(form.get("nome") || file.name || "").slice(0, 150);
+  if (!fileName.trim()) return send(400, { ok: false, error: "file_name_required" });
   const captured = String(form.get("capturado_em") || "");
-  const captureDate = new Date(captured);
-  if (!captured || Number.isNaN(captureDate.valueOf()) ||
+  let captureDate;
+  let captureSource;
+  try {
+    const fromName = captureFromFileName(fileName, captured);
+    captureDate = fromName || new Date(captured);
+    captureSource = fromName ? "nome" : "metadados";
+  } catch (_) {
+    return send(400, { ok: false, error: "invalid_filename_timestamp" });
+  }
+  if (!Number.isFinite(captureDate?.valueOf()) ||
       captureDate.valueOf() < Date.parse("2020-01-01") ||
       captureDate.valueOf() > Date.now() + 86400000)
     return send(400, { ok: false, error: "captured_at_required_iso8601" });
-  const fileName = String(form.get("nome") || file.name || "audio.m4a").slice(0, 150);
-  if (!fileName.trim()) return send(400, { ok: false, error: "file_name_required" });
 
   let original;
   try { original = await mimeFor(file); }
@@ -133,7 +162,9 @@ async function run(req) {
   if (!reservation?.ok || !reservation?.id) return send(503, { ok: false, error: "reservation_failed" });
   if (reservation.novo !== true)
     return send(200, { ok: reservation.status === "transcrito" || reservation.status === "sem_fala" || reservation.status === "processando",
-      duplicado: true, id: reservation.id, status: reservation.status, registro_id: reservation.registro_id || null });
+      duplicado: true, id: reservation.id, status: reservation.status,
+      capturado_em: captureDate.toISOString(), origem_data: captureSource,
+      registro_id: reservation.registro_id || null });
 
   const id = reservation.id;
   const claim = reservation.claim_id;
@@ -201,7 +232,8 @@ async function run(req) {
     if (!saved?.ok) throw Error("finalize_unconfirmed");
     return send(200, { ok: true, id, status: saved.status,
       registro_id: saved.registro_id || null, transcricao: transcript,
-      audio_preservado: true, provedor: provider, modelo: model });
+      audio_preservado: true, provedor: provider, modelo: model,
+      capturado_em: captureDate.toISOString(), origem_data: captureSource });
   } catch (_) {
     await safeError("banco", storagePath);
     return send(502, { ok: false, id, status: "erro_banco", error: "transcript_not_confirmed",

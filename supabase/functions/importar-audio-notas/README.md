@@ -16,3 +16,12 @@ Cada requisição consulta o Supabase. Sem opção salva, a escolha é ElevenLab
 - Ainda é necessário conferir as chaves dos provedores em Edge Functions → Secrets e testar um áudio real. Os testes automatizados foram mocks, **sem custo de API**.
 - Recorte de silêncio na cópia e automação de envio em lote pelo iOS ainda são pendências independentes.
 - A escolha de provedor não altera o motor de interpretação do Copiloto, que é separado da transcrição.
+
+## Data original no nome (09/11/2026)
+- Padrão documentado no desenho do atalho de gravação: `DN_yyyy-MM-dd_HH-mm-ss.m4a`, ex.: `DN_2026-11-09_04-25-30.m4a`.
+- A função `importar-audio-notas` v4 extrai a data/hora do nome (quando reconhecível) e salva como `capturado_em`, preservando o horário efetivo de gravação em vez do horário de transcrição.
+- Quando o nome não contém a data, utiliza `capturado_em` enviado pelo Atalhos (metadado de criação).
+- Se houver offset na data enviada pelo iPhone, é usado para converter o horário do nome; caso contrário, o padrão é `-03:00` (São Paulo).
+- Resposta de importação bem-sucedida indica `origem_data: nome` ou `metadados`.
+- A função **não muda nomes de arquivos no iPhone**. O formulário do atalho pode enviar o nome explicitamente em `nome`; se ausente, a função lê `file.name` do multipart.
+- A ação Repetir com Cada Item no Atalhos processa sequencialmente. Falta validar upload real no iOS e configurar a automação pessoal por hora do dia. Execuções suspensas pelo iOS ou interrompidas pela rede exigem revisão e retomada; não presumir execução garantida em background.
