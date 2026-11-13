@@ -27,7 +27,7 @@ def main():
     node = shutil.which('node')
     if not node:
         raise RuntimeError('Node 24 é necessário para executar o worker TypeScript isolado.')
-    for file in ['learning_worker.cjs', 'learning_browser.cjs']:
+    for file in ['learning_worker.cjs', 'learning_browser.cjs', 'learning_audio.cjs']:
         subprocess.run([node, str(ROOT / 'tests' / file)], cwd=ROOT, check=True)
     return 0
 

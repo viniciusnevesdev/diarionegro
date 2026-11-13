@@ -4,9 +4,10 @@
 -- dn_learning_url = URL completa de /functions/v1/aprender-registro
 -- dn_learning_service_key = chave service_role; nunca disponibilize no frontend.
 -- Executar somente após validar migration + Edge Function no ambiente escolhido.
+begin;
 do $$ begin
- if not exists(select 1 from vault.decrypted_secrets where name='dn_learning_url')
- or not exists(select 1 from vault.decrypted_secrets where name='dn_learning_service_key') then
+ if not exists(select 1 from vault.decrypted_secrets where name='dn_learning_url' and nullif(trim(decrypted_secret),'') is not null)
+ or not exists(select 1 from vault.decrypted_secrets where name='dn_learning_service_key' and nullif(trim(decrypted_secret),'') is not null) then
    raise exception 'Configure os dois secrets no Vault antes de instalar o scheduler';
  end if;
 end $$;
@@ -20,3 +21,4 @@ select cron.schedule('dn-aprendizado-continuo','* * * * *', $job$
  where exists(select 1 from public.aprendizado_fila where estado<>'concluido'
    and disponivel_em<=now() and (lease_ate is null or lease_ate<now()));
 $job$);
+commit;

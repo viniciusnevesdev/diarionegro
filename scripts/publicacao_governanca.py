@@ -51,7 +51,8 @@ def public_files():
 def pages_config():
     # Explicit paths: no dependency on Jekyll glob precedence. Rebuild if new root files are added.
     allowed = set(public_files())
-    excluded = set()
+    # Keep private tooling excluded even when absent from this worktree.
+    excluded = {'.agents', '.aws', '.codex'}
     def visit(folder):
         for p in folder.iterdir():
             rel = p.relative_to(ROOT).as_posix()

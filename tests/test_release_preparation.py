@@ -41,7 +41,7 @@ class ReleasePreparationTest(unittest.TestCase):
                 continue
             excluded = any(rel == e or rel.startswith(e + '/') for e in cfg['exclude'])
             self.assertEqual(not excluded, rel in expected, rel)
-        for target in ('CONTEXTO_PESSOAL_V08.md','supabase','tests','scripts','dist'):
+        for target in ('CONTEXTO_PESSOAL_V08.md','supabase','tests','scripts','dist','.agents','.aws','.codex'):
             self.assertIn(target, cfg['exclude'])
 
     def test_frontend_references_and_archive(self):

@@ -38,7 +38,9 @@ Comando reproduzível, sem rede/credenciais: `python3 tests/run_learning_local.p
 
 `tests/learning_postgres.cjs` acrescenta 10 cenários à suíte `node tests/validate_integrated.cjs`: fila por caminho, lease/idempotência, evidências, contradições, prioridade humana, hipóteses, rejeições, desativação, rollback/retomada e segurança. O teste de release também inclui a nova migration, preservando fixtures da Estação Casa e o histórico anterior.
 
-**Banco pendente:** a tentativa de executar a suíte integrada parou em `Cannot find module 'pg'`. O cluster PostgreSQL/PostgREST em `/tmp/dn-validation-tools` também não existe. O shell está sem rede; não foi possível obter as dependências. Consulta somente de leitura ao schema remoto foi bloqueada pela política de aprovação do ambiente. Nenhum teste de SQL/RLS foi declarado aprovado.
+**Banco validado em 2026-11-13:** os 10 cenários PostgreSQL/RLS passaram em PostgreSQL 16.15 descartável, UTF-8. A suíte integrada completa passou com 33 grupos, incluindo três novos grupos do scheduler e remoção da fila na exclusão de conta. As oito verificações de release passaram, incluindo backup/restauração e preservação da fixture Estação Casa. Consulte o registro detalhado em `tests/RESULTADOS_APRENDIZADO.md`.
+
+O importador real foi executado com storage, STT e RPC simulados: cinco cenários passaram para ElevenLabs/OpenAI, duplicação e falhas. Isso confirma o contrato até `audio_notas_finalizar`, mas não a implementação desse RPC remoto, ausente no repositório. Não foi consultado banco remoto.
 
 ## Preparação para publicar
 
@@ -46,7 +48,7 @@ Comando reproduzível, sem rede/credenciais: `python3 tests/run_learning_local.p
 
 Antes de qualquer publicação:
 
-1. Em ambiente isolado, instalar as dependências da suíte integrada e executar `node tests/validate_integrated.cjs` e `node tests/validate_release.cjs`. Verificar schema real de `registros`, propriedade `user_id`, defaults e labels de entrada usados pelo RPC `audio_notas_finalizar` e pela Estação Casa. Esses RPCs não têm definição nesta worktree; a cobertura do trigger depende de gravarem texto bruto em uma das três entradas aceitas.
+1. Suítes integrada e de release aprovadas no ambiente isolado. Antes de publicar, verificar em homologação o schema real de `registros`, propriedade `user_id`, defaults e labels de entrada usados pelo RPC `audio_notas_finalizar` e pela Estação Casa. Esses RPCs não têm definição nesta worktree; a cobertura do trigger depende de gravarem texto bruto em uma das três entradas aceitas.
 2. Validar cenários reais de linguagem: fatos explícitos, citações de terceiros, perguntas, negativas, preferências independentes, mudanças e correções. Confirmar políticas de retenção da cópia textual na fila e efeitos da exclusão de conta.
 3. Após validação, backup e autorização de publicação, aplicar a migration e publicar `aprender-registro` e a reanálise com `_shared`, mantendo JWT verificado. Configurar `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` e modelo nos secrets do servidor.
 4. Instalar `supabase/validation/instalar_aprendizado_scheduler.sql` com pg_cron, pg_net e Vault. Configurar no Vault `dn_learning_url` e `dn_learning_service_key`; nunca no frontend. O scheduler processa até quatro entradas por minuto, com controle de concorrência no banco. É necessário para importações com o app fechado; com o app aberto, o cliente inicia imediatamente.
@@ -54,8 +56,6 @@ Antes de qualquer publicação:
 
 As proteções de histórico do publicador recusam migrations remotas inesperadas; inspecionar e reconciliar o manifesto em revisão se o ambiente tiver evoluído. Não executar reparo automático nem reaplicar migrations antigas.
 
-## Commit bloqueado pelo ambiente
+## Registro Git
 
-`git add` falhou: `Unable to create .../.git/worktrees/diarionegro-aprendizado/index.lock: Read-only file system`. O Git administrativo está fora da raiz gravável desta worktree; não foi contornado nem alterado. Não há commits novos ou push.
-
-Após disponibilizar escrita normal ao Git desta mesma worktree, revisar `git diff` e os arquivos novos, executar novamente os testes e fazer o commit na branch da tarefa, por exemplo `git add -A` e `git commit -m "feat: aprendizado pessoal continuo com fila auditavel"`. Não publicar antes das validações pendentes acima.
+A implementação inicial foi salva em `9108a6c59fb6d0e0ccaf98570c96f4282b0d930e`. As correções e os resultados posteriores são registrados nesta mesma branch, sem push ou deploy.

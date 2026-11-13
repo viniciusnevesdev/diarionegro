@@ -45,6 +45,7 @@ async function main(){
   console.log('PASS ordered migrations: '+history.join(', '));passed++;
   await admin.query(`insert into auth.users values ($1),($2)`,[A,B]);
   await require('./learning_postgres.cjs')({admin,A,B,rpc,asUser,test});
+  await require('./learning_scheduler.cjs')({admin,A,ROOT,test});
   const run=await asUser(A,c=>c.query("insert into public.reanalisacoes(user_id,context_version) values($1,'test') returning id",[A]));
   const runA=run.rows[0].id;
   await asUser(B,c=>c.query("insert into public.memorias(user_id,texto,origem,fingerprint,canonical_key) values($1,'B-private-memory','outra','B-private','B-private')",[B]));
@@ -106,7 +107,7 @@ async function main(){
     }
 
     await admin.query('delete from auth.users where id=$1',[A]);
-    for(const t of ['memorias','memoria_historico','memoria_fontes','memoria_usos','interpretacoes','interpretacoes_historico','registros','reanalisacoes','associacoes','associacao_historico','associacao_usos'])assert.equal((await admin.query(`select count(*)::int n from public.${t} where user_id=$1`,[A])).rows[0].n,0);
+    for(const t of ['memorias','memoria_historico','memoria_fontes','memoria_usos','interpretacoes','interpretacoes_historico','aprendizado_fila','registros','reanalisacoes','associacoes','associacao_historico','associacao_usos'])assert.equal((await admin.query(`select count(*)::int n from public.${t} where user_id=$1`,[A])).rows[0].n,0);
     assert.equal((await admin.query('select count(*)::int n from auth.users where id=$1',[B])).rows[0].n,1);
     assert.equal((await admin.query('select count(*)::int n from public.memorias where user_id=$1',[B])).rows[0].n,1);
   });
