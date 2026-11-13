@@ -3,7 +3,7 @@
   const config = window.DIARIO_NEGRO_CONFIG;
   const sdk = window.supabase;
 
-  const NOTE_INPUTS = ['texto', 'ditado', 'audio_ia'];
+  const NOTE_INPUTS = ['texto', 'ditado', 'audio_ia', 'voz'];
   const RECORD_STATE_INPUTS = ['registro_excluido', 'registro_restaurado']; // DN_FEATURES_V071_SOFT_DELETE
   const APP_EVENT_TYPES = [
     'tarefa_criada', 'tarefa_editada', 'tarefa_iniciada', 'tarefa_concluida', 'tarefa_excluida',

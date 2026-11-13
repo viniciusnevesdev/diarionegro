@@ -15,7 +15,7 @@ def test_permanent_modes():
 
 def test_only_raw_inputs():
     m=re.search(r"const INPUTS = \[[^;]+;",JS).group(0)
-    for x in ['texto','ditado','audio_ia']: assert x in m
+    for x in ['texto','ditado','audio_ia','voz']: assert x in m
     for x in ['tarefa_criada','emocao_registrada','memoria_ia']: assert x not in m
 
 def test_never_recreates_tasks():

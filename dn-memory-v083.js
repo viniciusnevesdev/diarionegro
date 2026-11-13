@@ -3,7 +3,7 @@
   'use strict';
 
   const VERSION = '0.8.3-reanalysis-v2';
-  const INPUTS = ['texto', 'ditado', 'audio_ia'];
+  const INPUTS = ['texto', 'ditado', 'audio_ia', 'voz'];
   const $ = (q, root = document) => root.querySelector(q);
   const icon = (name, cls = '') => window.DN_SYMBOLS?.icon?.(name, cls) || '';
   const esc = (v) => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');

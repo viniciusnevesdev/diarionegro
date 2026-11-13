@@ -6,6 +6,13 @@
 -- Executar somente após validar migration + Edge Function no ambiente escolhido.
 begin;
 do $$ begin
+ if not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='cron' and p.proname='schedule')
+ or not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='net' and p.proname='http_post')
+ or to_regclass('vault.decrypted_secrets') is null then
+   raise exception 'Habilite pg_cron, pg_net e Vault antes de instalar o scheduler';
+ end if;
  if not exists(select 1 from vault.decrypted_secrets where name='dn_learning_url' and nullif(trim(decrypted_secret),'') is not null)
  or not exists(select 1 from vault.decrypted_secrets where name='dn_learning_service_key' and nullif(trim(decrypted_secret),'') is not null) then
    raise exception 'Configure os dois secrets no Vault antes de instalar o scheduler';

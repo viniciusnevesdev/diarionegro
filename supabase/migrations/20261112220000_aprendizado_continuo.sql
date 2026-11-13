@@ -27,7 +27,11 @@ create index aprendizado_pendente on public.aprendizado_fila(disponivel_em, crea
 create function public.dn_aprendizado_enfileirar() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-  if new.entrada in ('texto','ditado','audio_ia') and length(trim(new.texto_original)) > 0 then
+  -- O importador Audio Notas remoto usa `voz`. Respostas da Estacao Casa sao
+  -- conversas estruturadas (fala da assistente + botao escolhido), nao fatos do usuario.
+  if new.entrada in ('texto','ditado','audio_ia','voz')
+     and new.origem is distinct from 'estacao_casa'
+     and length(trim(new.texto_original)) > 0 then
     insert into public.aprendizado_fila(user_id,record_id,texto,entrada,registrado_em)
     values(new.user_id,new.id,new.texto_original,new.entrada,new.registrado_em)
     on conflict do nothing;

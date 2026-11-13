@@ -1,5 +1,5 @@
 {
-  "confirmed_by": "user: remote schema and migration history checked",
+  "confirmed_by": "read-only pre-publication homologation on 2026-11-13",
   "baseline": [
     {
       "version": "20261024181522",
@@ -24,44 +24,67 @@
       "name": "create_reanalise_historica_v083",
       "local_source": "20261024223500_create_reanalise_historica.sql",
       "sha256": "49a8de954180219997712c1f1874f674666ae78ec944b2478ebfd41c141c79eb"
-    }
-  ],
-  "pending": [
+    },
     {
       "version": "20261027120000",
       "name": "create_associacoes_governanca",
       "local_source": "20261027120000_create_associacoes_governanca.sql",
-      "sha256": "814a48a2593e3d966fbb530921c9f4275461de50813f1149d179088ad32d9ff9"
+      "sha256": "814a48a2593e3d966fbb530921c9f4275461de50813f1149d179088ad32d9ff9",
+      "remote_statements_md5": "bca153983fd7b251a5d61172b4c1ba32"
     },
     {
       "version": "20261027130000",
       "name": "associacoes_reencontros",
       "local_source": "20261027130000_associacoes_reencontros.sql",
-      "sha256": "4d7e30f39e0dda5ec0654fd12f29d30752d2a5ad9d344802769fe42bedad9768"
+      "sha256": "4d7e30f39e0dda5ec0654fd12f29d30752d2a5ad9d344802769fe42bedad9768",
+      "remote_statements_md5": "8ab4e80aa9bd5e4534a4789bd4385256"
     },
     {
       "version": "20261027140000",
       "name": "contexto_copiloto_autorizado",
       "local_source": "20261027140000_contexto_copiloto_autorizado.sql",
-      "sha256": "efbbf55a2b3686b5c6110e9eaee98c9c62d65578454eb75067b7214051be367a"
+      "sha256": "efbbf55a2b3686b5c6110e9eaee98c9c62d65578454eb75067b7214051be367a",
+      "remote_statements_md5": "d4d317c29839f3d8c18b98b06783546b"
     },
     {
       "version": "20261027150000",
       "name": "contexto_sem_exclusao_global",
       "local_source": "20261027150000_contexto_sem_exclusao_global.sql",
-      "sha256": "c135de3bab681f8ccd5d90bc4013738292920f3aeafad8409c6adca2ca68c137"
+      "sha256": "c135de3bab681f8ccd5d90bc4013738292920f3aeafad8409c6adca2ca68c137",
+      "remote_statements_md5": "ae9fc1ed83536c33cb9117d68bbdd939"
     },
     {
       "version": "20261027160000",
       "name": "memoria_auditoria_cascata",
       "local_source": "20261027160000_memoria_auditoria_cascata.sql",
-      "sha256": "4da997ed55d9e89edc522955fb4d146f031c35c7edda6881ce2cf47ab225e074"
+      "sha256": "4da997ed55d9e89edc522955fb4d146f031c35c7edda6881ce2cf47ab225e074",
+      "remote_statements_md5": "f0b0eb0be75cdc5bca71f05e37364d21"
     },
+    {
+      "version": "20261107061434",
+      "name": "audio_notas_elevenlabs_scribe_v2_importacao_privada",
+      "local_source": null,
+      "sha256": null
+    },
+    {
+      "version": "20261107061831",
+      "name": "audio_notas_disable_unused_remote_secret_setup",
+      "local_source": null,
+      "sha256": null
+    },
+    {
+      "version": "20261109075552",
+      "name": "audio_transcricao_escolha_livre_e_rls",
+      "local_source": null,
+      "sha256": null
+    }
+  ],
+  "pending": [
     {
       "version": "20261112220000",
       "name": "aprendizado_continuo",
       "local_source": "20261112220000_aprendizado_continuo.sql",
-      "sha256": "ee0c94db0448f0db960fcd86b8585701db3a6d7407b3fc4118e63d6ac9f8649f"
+      "sha256": "034e12c3f9c728207c8ab6cef2a32f5539ea7ab1433f6ceea88a6ea71b3fe71e"
     }
   ]
 }

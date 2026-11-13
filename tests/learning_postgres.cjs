@@ -3,13 +3,13 @@ const assert=require('node:assert/strict');
 module.exports=async function({admin,A,B,rpc,asUser,test}) {
  const mem=(texto,valor,extras={})=>({texto,tipo:'preferencia',categoria:'Rotina',classificacao:'declaracao_clara',evidencia:texto,justificativa:'Declaração',confianca:.98,aspecto:'pessoa:preferencia:bebida',valor,canonical_key:'preferencia:bebida',fingerprint:'fixture:'+valor,...extras});
  const extraction=(m,associacoes=[])=>({resumo:'teste',categoria:'Rotina',intencao:'registro',memorias:m,associacoes,_meta:{model:'fake'}});
- const put=async(id,text,entrada='texto',owner=A)=>admin.query('insert into public.registros(id,user_id,texto_original,entrada) values($1,$2,$3,$4)',[id,owner,text,entrada]);
+ const put=async(id,text,entrada='texto',owner=A,origem='teste')=>admin.query('insert into public.registros(id,user_id,texto_original,entrada,origem) values($1,$2,$3,$4,$5)',[id,owner,text,entrada,origem]);
  const claim=()=>rpc(admin,'dn_aprendizado_claim',[A]);
  const save=async(j,data)=>{await rpc(admin,'dn_aprendizado_checkpoint',[j.id,j.lease_token,data]);return rpc(admin,'dn_aprendizado_aplicar',[j.id,j.lease_token]);};
  let job,firstId;
  await test('continuous: every raw path enqueues; structured events do not',async()=>{
-  for(const [id,type] of [['learn-text','texto'],['learn-dictation','ditado'],['learn-audio','audio_ia'],['learn-event','tarefa_criada']]) await put(id,'Prefiro café',type);
-  assert.equal((await admin.query('select count(*)::int n from public.aprendizado_fila')).rows[0].n,3);
+  for(const [id,type,origin] of [['learn-text','texto'],['learn-dictation','ditado'],['learn-audio','audio_ia'],['learn-imported-audio','voz'],['learn-event','tarefa_criada'],['learn-station','texto','estacao_casa']]) await put(id,'Prefiro café',type,A,origin);
+  assert.equal((await admin.query('select count(*)::int n from public.aprendizado_fila')).rows[0].n,4);
  });
  await test('continuous: exclusive lease and immediate audited fact; no fake human confirmation',async()=>{
   job=await claim();assert(job);const other=await claim();assert.notEqual(other.id,job.id);
@@ -26,7 +26,7 @@ module.exports=async function({admin,A,B,rpc,asUser,test}) {
   await admin.query("update public.aprendizado_fila set disponivel_em=now() where estado='pendente'");
   let next;while((next=await claim())) await save(next,extraction([mem('Prefiro café','café')]));
   assert.equal((await admin.query("select count(*)::int n from public.memorias where fingerprint='fixture:café'")).rows[0].n,1);
-  assert.equal((await admin.query('select count(*)::int n from public.memoria_fontes where memoria_id=$1',[firstId])).rows[0].n,3);
+  assert.equal((await admin.query('select count(*)::int n from public.memoria_fontes where memoria_id=$1',[firstId])).rows[0].n,4);
  });
  await test('continuous: conflicting change removes automatic facts from authorized context',async()=>{
   await put('learn-change','Prefiro chá');await save(await claim(),extraction([mem('Prefiro chá','chá')]));

@@ -30,10 +30,12 @@ test('switching accounts stops an in-flight drain',async()=>{
 });
 test('database trigger is the common boundary for app, Copilot, timeline and external imports',()=>{
  const sql=fs.readFileSync(path.join(ROOT,'supabase/migrations/20261112220000_aprendizado_continuo.sql'),'utf8');
- for(const input of ['texto','ditado','audio_ia'])assert(sql.includes(`'${input}'`));
+ for(const input of ['texto','ditado','audio_ia','voz'])assert(sql.includes(`'${input}'`));
+ assert(sql.includes("new.origem is distinct from 'estacao_casa'"));
  assert(sql.includes('after insert on public.registros'));assert(sql.includes('on conflict do nothing'));assert(sql.includes('for update skip locked'));
  assert(!/insert into public\.(tarefas|tasks)/i.test(sql));
  const app=fs.readFileSync(path.join(ROOT,'app.js'),'utf8');assert.equal((app.match(/new CustomEvent\('dn:record-saved'\)/g)||[]).length,2);
+ assert(app.includes("['texto', 'ditado', 'audio_ia', 'voz']"));
  const html=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');assert(html.includes('src="dn-learning.js?'));
 });
 test('human correction retains provenance and invalidates the old automatic classification',async()=>{

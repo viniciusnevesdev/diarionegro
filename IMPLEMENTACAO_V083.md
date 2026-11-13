@@ -9,7 +9,7 @@
 - oferece quatro escopos: desde a última versão, nunca reanalisados, período específico e tudo;
 - preserva cada interpretação em `interpretacoes_historico` e mantém o snapshot mais recente em `interpretacoes`;
 - registra cada execução em `reanalisacoes`, com progresso e estatísticas;
-- reanalisa apenas entradas brutas do usuário: `texto`, `ditado` e `audio_ia`;
+- reanalisa apenas entradas brutas do usuário: `texto`, `ditado`, `audio_ia` e `voz` (Audio Notas);
 - não recria, conclui, edita nem reabre tarefas antigas;
 - declarações claras podem virar memória ativa com o registro original como fonte;
 - inferências entram como `aguardando_confirmacao` e ficam inativas até confirmação;

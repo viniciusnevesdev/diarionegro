@@ -92,7 +92,10 @@ def history_guard(manifest):
     versions = ','.join("'%s'" % item['version'] for item in items)
     assertions = []
     for item in manifest['baseline']:
-        assertions.append("if not exists (select 1 from supabase_migrations.schema_migrations where version='%s' and name='%s') then raise exception 'Baseline mismatch: %s'; end if;" % (item['version'], item['name'], item['version']))
+        content_guard = ""
+        if item.get('remote_statements_md5'):
+            content_guard = " and md5(array_to_string(statements,E'\\n'))='%s'" % item['remote_statements_md5']
+        assertions.append("if not exists (select 1 from supabase_migrations.schema_migrations where version='%s' and name='%s'%s) then raise exception 'Baseline mismatch: %s'; end if;" % (item['version'], item['name'], content_guard, item['version']))
     for item in manifest['pending']:
         text = (ROOT / 'supabase/migrations' / item['local_source']).read_text()
         md5 = hashlib.md5(text.encode()).hexdigest()

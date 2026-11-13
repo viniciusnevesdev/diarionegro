@@ -10,6 +10,13 @@ module.exports=async({admin,A,ROOT,test})=>{
  create table net.calls(url text,headers jsonb,body jsonb,timeout integer);
  create function net.http_post(url text,headers jsonb,body jsonb,timeout_milliseconds integer) returns bigint language plpgsql as $$begin
  insert into net.calls values($1,$2,$3,$4);return 1;end$$;`);
+ await test('scheduler: missing pg_cron, pg_net or Vault surface refuses installation',async()=>{
+  await admin.query('drop function net.http_post(text,jsonb,jsonb,integer)');
+  await assert.rejects(()=>admin.query(sql),/Habilite pg_cron, pg_net e Vault/);
+  await admin.query('rollback');
+  await admin.query(`create function net.http_post(url text,headers jsonb,body jsonb,timeout_milliseconds integer) returns bigint language plpgsql as $$begin
+   insert into net.calls values($1,$2,$3,$4);return 1;end$$;`);
+ });
  await test('scheduler: missing or empty Vault secrets refuse installation atomically',async()=>{
   for(const value of [null,'   ']){
    if(value!==null)await admin.query("insert into vault.decrypted_secrets values('dn_learning_url','https://edge.invalid/functions/v1/aprender-registro'),('dn_learning_service_key',$1)",[value]);
