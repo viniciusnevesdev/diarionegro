@@ -108,7 +108,7 @@
     if (!client) throw new Error('Supabase não disponível.');
     const { data, error } = await client.auth.getSession();
     if (error) throw error;
-    if (!data?.session?.user?.id) throw new Error('Entre no Diário Negro primeiro.');
+    if (!data?.session?.user?.id) throw new Error('Entre no Copiloto primeiro.');
     return data.session;
   }
 

@@ -1,5 +1,5 @@
 /*
-  DIÁRIO NEGRO — TOKENS GLOBAIS
+  COPILOTO — TOKENS GLOBAIS
 
   Fonte de verdade do sistema de design.
 
@@ -12,7 +12,7 @@
 :root {
   --bg: #f7f6f2;
   --ink: #101426;
-  --muted: #71778e;
+  --muted: #626b80;
   --line: rgba(255,255,255,.55);
 
   --glass: rgba(255,255,255,.49);
@@ -56,19 +56,30 @@
   --leading-normal: 1.35;
   --leading-relaxed: 1.45;
 
-  /* Cores semânticas */
+  /* MMU V0.0.13: papéis semânticos oficiais, sem substituir a identidade principal. */
   --color-status-neutral: #757b8f;
-
-  --color-danger: #EA292C;
-  --color-danger-soft: rgba(255,226,231,.72);
-
-  --color-success: #259859;
-  --color-success-soft: #daf1e4;
-
-  --color-warning: #fd9900;
-
-  --color-info: #193b8e;
-  --color-info-soft: #cde6ff;
+  --color-primary: #111526; /* cor primária do PWA já existente, não é padrão MMU */
+  --on-primary: #FFFFFF;
+  --color-danger: #E22400;
+  --color-success: #34C759;
+  --color-warning: #FFB501;
+  --color-info: #0189FB;
+  --action-add: #30BCFF;
+  --on-danger: #FFFFFF;
+  --on-success: #000000;
+  --on-warning: #000000;
+  --on-info: #000000;
+  --on-action-add: #000000;
+  --color-danger-soft: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  --color-success-soft: color-mix(in srgb, var(--color-success) 12%, transparent);
+  --color-info-soft: color-mix(in srgb, var(--color-info) 12%, transparent);
+  --surface: var(--bg);
+  --surface-card: var(--glass-strong);
+  --surface-soft: rgba(69,83,121,.08);
+  --text: var(--ink);
+  --text-muted: var(--muted);
+  --border: rgba(39,50,75,.24);
+  --focus-ring: var(--color-info);
 
   /* DN_GLASS_SYSTEM_TOKENS_V1 */
 
@@ -104,8 +115,25 @@
 }
 
 
-/* DN_DESTRUCTIVE_TOKEN_V1 */
+/* Compatibilidade com componentes existentes: fonte única do papel destrutivo. */
 :root {
-  --dn-color-destructive: #EA292C;
-  --dn-color-destructive-rgb: 234, 41, 44;
+  --dn-color-destructive: var(--color-danger);
+  --dn-color-destructive-rgb: 226, 36, 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151f;
+    --ink: #f1f3fa;
+    --muted: #b8c1d4;
+    --line: rgba(225,232,245,.25);
+    --glass: rgba(26,32,48,.88);
+    --glass-strong: rgba(26,32,48,.96);
+    --shadow: 0 16px 40px rgba(0,0,0,.28);
+    --surface-soft: rgba(255,255,255,.06);
+    --border: rgba(225,232,245,.25);
+    --color-danger-soft: color-mix(in srgb, var(--color-danger) 16%, transparent);
+    --color-success-soft: color-mix(in srgb, var(--color-success) 15%, transparent);
+    --color-info-soft: color-mix(in srgb, var(--color-info) 15%, transparent);
+  }
 }

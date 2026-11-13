@@ -7,19 +7,20 @@
   <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Diário Negro" />
-  <title>Diário Negro</title>
+  <meta name="apple-mobile-web-app-title" content="Copiloto" />
+  <title>Copiloto</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="tokens.css?v=20261027-060612-806406" />
-  <link rel="stylesheet" href="style.css?v=20261027-060612-806406" />
-  <link rel="stylesheet" href="copiloto.css?v=20261027-060612-806406" />
-  <link rel="stylesheet" href="settings.css?v=20261109-stt-switch-1" />
-  <link rel="stylesheet" href="dn-memory.css?v=20261027-governanca-final" />
-  <link rel="stylesheet" href="dn-memory-v083.css?v=20261027-governanca-final" />
+  <link rel="stylesheet" href="tokens.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="style.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="copiloto.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="settings.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="dn-memory.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="dn-memory-v083.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="theme-system.css?v=20261113-mmu-v1" />
   <!-- DN_VERSION_SYSTEM_START -->
   <meta name="dn-version" content="0.8.3" />
-  <meta name="dn-build" content="20261112-continuo-v1" />
+  <meta name="dn-build" content="20261113-mmu-v1" />
   <!-- DN_VERSION_SYSTEM_END -->
 </head>
 <body>
@@ -28,11 +29,11 @@
   <div class="ambient ambient-b"></div>
   <div class="ambient ambient-c"></div>
 
-  <main class="app-shell" aria-label="Diário Negro">
+  <main class="app-shell" aria-label="Copiloto">
     <div id="homeView" class="page-view">
     <header class="topbar">
       <div class="brand-wrap">
-        <h1 class="brand">Diário<br><span>Negro</span></h1>
+        <h1 class="brand brand--copiloto">Copiloto</h1>
       </div>
 
       <button
@@ -163,7 +164,7 @@
   <dialog id="loginDialog" class="demo-dialog auth-dialog">
     <form id="loginForm" class="demo-sheet auth-sheet">
       <div class="sheet-handle"></div>
-      <h2>Entrar no Diário Negro</h2>
+      <h2>Entrar no Copiloto</h2>
       <p class="sheet-copy">Você só precisa fazer isso uma vez neste aparelho.</p>
 
       <label class="field-label" for="loginEmail">E-mail</label>
@@ -326,7 +327,7 @@
     <div class="demo-sheet icon-picker-sheet">
       <div class="sheet-handle"></div>
       <div class="manager-heading">
-        <div><h2>Ícone da tarefa</h2><p class="sheet-copy">Escolha um símbolo do banco do Diário Negro.</p></div>
+        <div><h2>Ícone da tarefa</h2><p class="sheet-copy">Escolha um símbolo da biblioteca do Copiloto.</p></div>
       </div>
       <div id="taskIconGrid" class="task-icon-grid"></div>
       <button type="button" class="primary-btn sheet-button" id="closeTaskIconPicker">Fechar</button>
@@ -365,12 +366,12 @@
         </section>
 
         <section class="dn-settings-section">
-          <div class="dn-settings-section-title">COPILOTO</div>
+          <div class="dn-settings-section-title">MOTOR DE INTERPRETAÇÃO</div>
           <div class="dn-settings-card glass-card">
             <button type="button" class="dn-settings-row" id="openCopilotPhrases">
               <span class="dn-settings-row-copy">
                 <strong>Frases rotativas</strong>
-                <small id="copilotPhrasesSummary">Personalize o que o Copiloto diz</small>
+                <small id="copilotPhrasesSummary">Personalize as frases do assistente</small>
               </span>
               <span class="dn-settings-chevron">›</span>
             </button>
@@ -434,7 +435,7 @@
           <div class="dn-settings-card glass-card">
             <div class="dn-settings-static-row">
               <div class="dn-settings-row-copy">
-                <strong>Aparência do Diário Negro</strong>
+                <strong>Aparência do Copiloto</strong>
                 <small>Mais opções serão adicionadas aqui.</small>
               </div>
             </div>
@@ -455,12 +456,12 @@
       </div>
     </section>
 
-    <section id="copilotPhrasesPage" class="dn-settings-page" aria-label="Frases do Copiloto" hidden>
+    <section id="copilotPhrasesPage" class="dn-settings-page" aria-label="Frases do assistente" hidden>
       <header class="dn-settings-header">
         <button type="button" class="dn-settings-back" id="copilotPhrasesBack" aria-label="Voltar para Ajustes">
           <span class="dn-settings-back-icon" data-dn-symbol="chevron.right"></span>
         </button>
-        <h1>Frases do Copiloto</h1>
+        <h1>Frases do assistente</h1>
         <span class="dn-settings-header-spacer" aria-hidden="true"></span>
       </header>
 
@@ -510,15 +511,15 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20261027-060612-806406"></script>
-  <script src="dn-symbols.js?v=20261027-060612-806406"></script>
+  <script src="dn-symbols.js?v=20261113-mmu-v1"></script>
   <script src="app.js?v=20261112-continuo-v1"></script>
   <script src="dn-interpretations.js?v=20261029-tarefas-seguras-v1"></script>
   <script src="dn-learning.js?v=20261112-continuo-v1"></script>
-  <script src="dn-memory.js?v=20261112-continuo-v1"></script>
-  <script src="dn-memory-v083.js?v=20261027-governanca-final"></script>
+  <script src="dn-memory.js?v=20261113-mmu-v1"></script>
+  <script src="dn-memory-v083.js?v=20261113-mmu-v1"></script>
   <script src="glass-system.js?v=20261027-060612-806406"></script>
   <script src="version-check.js?v=20261027-060612-806406"></script>
-  <script src="copiloto.js?v=20261112-continuo-v1"></script>
+  <script src="copiloto.js?v=20261113-mmu-v1"></script>
   <script src="settings.js?v=20261109-stt-switch-1"></script>
   <!-- DN_FEATURES_V07_AI_TIMELINE -->
   <script src="dn-ai.js?v=20261027-060612-806406"></script>

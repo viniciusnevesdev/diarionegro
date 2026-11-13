@@ -18,6 +18,7 @@
     "PROMPT_CODEX_DIARIO_NEGRO_V082_MEMORIA_CONTROLE_TOTAL.md",
     "STATUS_APRENDIZADO_2026-11-13.md",
     "dist",
+    "docs",
     "iniciar.sh",
     "scripts",
     "supabase",

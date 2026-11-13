@@ -1,0 +1,94 @@
+/* Copiloto — sobreposições de componentes por tema.
+ * Tokens globais APENAS em tokens.css (MMU V0.0.13).
+ * Sem novos ícones nem substituição de identidade visual já aprovada.
+ */
+@media (prefers-color-scheme: dark) {
+  html, body { background-color: var(--bg); color: var(--ink); }
+  body {
+    background:
+      radial-gradient(72% 40% at 82% 15%, rgba(75,78,127,.22), transparent 68%),
+      radial-gradient(56% 40% at 9% 72%, rgba(61,106,139,.14), transparent 70%),
+      linear-gradient(180deg,#131925 0%,#10141f 100%);
+  }
+  .ambient { opacity: .22; }
+  .brand span, .tagline, .eyebrow { color: var(--muted); }
+  .glass, .glass-card, .assistant-card, .greeting-card {
+    background-color: var(--glass);
+    border-color: var(--border);
+    box-shadow: var(--shadow);
+  }
+  .glass-card::before, .greeting-card::before { opacity: .3; }
+  .icon-btn.glass { background: var(--surface-card); color: var(--ink); }
+  .bottom-dock {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  }
+  .dock-item { color: var(--muted); }
+  .dock-item.active { color: var(--ink); }
+  .dock-plus { background: var(--action-add); color: var(--on-action-add); }
+  .dn-settings-page, .dn-settings-dialog {
+    background: linear-gradient(180deg,#161d2a,#10151f);
+    color: var(--ink);
+  }
+  .dn-settings-header {
+    background: rgba(23,29,43,.92);
+    color: var(--ink);
+    border-color: var(--border);
+  }
+  .dn-settings-header h1,.dn-settings-back,
+  .dn-settings-row,.dn-settings-static-row,
+  .dn-settings-card,.dn-settings-card strong { color: var(--ink); }
+  .dn-settings-section-title,.dn-settings-row small,.dn-settings-static-row small {
+    color: var(--muted);
+  }
+  .dn-settings-card,.dn-settings-row,.dn-settings-static-row {
+    background: var(--surface-card);
+    border-color: var(--border);
+  }
+  .dn-memory-page,.dn-memory-summary,.dn-memory-toolbar,
+  .dn-memory-card,.dn-memory-detail,.dn-memory-empty,.dn-memory-loading,
+  .dn-memory-categories,.dn-base-context article,
+  .dn-memory-evidence,.dn-reanalysis-card,.dn-memory-learning-card {
+    background-color: var(--surface-card);
+    border-color: var(--border);
+  }
+  .app-shell :is(
+    .greeting-copy h2,.section-heading h2,.assistant-title h2,
+    .dn-memory-card h3,.dn-memory-card strong,.dn-memory-summary b,
+    .dn-memory-detail-heading,.dn-memory-detail-section h3,
+    .dn-base-context article strong,.dn-settings-row strong,
+    .dn-settings-page h1,.dn-memory-empty strong,.manager-heading h2
+  ) { color: var(--ink); }
+  .app-shell :is(
+    .greeting-copy p,.section-heading .text-btn,
+    .dn-memory-card p,.dn-memory-card-top,.dn-memory-categories,
+    .dn-memory-status,.dn-memory-meta,.dn-memory-detail-section p,
+    .dn-base-context article p,.dn-base-context article small,
+    .dn-memory-evidence p,.dn-memory-evidence span,
+    .dn-settings-row small,.dn-settings-static-row small
+  ) { color: var(--muted); }
+  :is(input,textarea,select,.field-input,.dn-memory-search,.dn-memory-search input,
+  .dn-memory-advanced-filters select,.dn-memory-advanced-filters input) {
+    background-color: var(--surface-card);
+    color: var(--ink);
+    border-color: var(--border);
+  }
+  :is(.demo-sheet,.auth-sheet,.form-sheet,.detail-sheet,.manager-sheet,
+    .icon-picker-sheet,.task-icon-choice,.task-detail-icon,.dn-memory-more) {
+    background: var(--surface-card);
+    color: var(--ink);
+    border-color: var(--border);
+  }
+  :is(.dn-memory-more,.dn-memory-card-actions button,.dn-memory-quality summary,
+   .dn-memory-advanced-filters summary,.dn-memory-maintenance summary) {
+    color: var(--ink);
+  }
+}
+:where(button,a,input,select,textarea,summary):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient, .plus-led { animation: none; }
+}
