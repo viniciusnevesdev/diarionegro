@@ -27,7 +27,7 @@ export async function handle(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response('ok',{headers:CORS});
   const reply = (data:unknown,status=200) => new Response(JSON.stringify(data),{status,headers:{...CORS,'Content-Type':'application/json'}});
   if (req.method !== 'POST') return reply({error:'Método não permitido'},405);
-  if (Deno.env.get('DN_CONTINUOUS_LEARNING_ENABLED') === 'false') return reply({error:'Aprendizado pausado'},503);
+  if (Deno.env.get('DN_CONTINUOUS_LEARNING_ENABLED') !== 'true') return reply({error:'Aprendizado pausado'},503);
   const url=Deno.env.get('SUPABASE_URL'), service=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !service) return reply({error:'Worker indisponível'},503);
   const bearer=req.headers.get('Authorization') || '';

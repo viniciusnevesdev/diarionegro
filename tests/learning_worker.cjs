@@ -7,7 +7,7 @@ const ROOT=path.resolve(__dirname,'..');
 function loadWorker(fetch, env={}) {
   const cache={};
   const context=vm.createContext({Request,Response,AbortSignal,TextEncoder,crypto,structuredClone,fetch,
-    Deno:{env:{get:name=>({...{SUPABASE_URL:'https://db.invalid',SUPABASE_SERVICE_ROLE_KEY:'service-secret',OPENAI_API_KEY:'fake-key'},...env})[name]},serve(){}}});
+    Deno:{env:{get:name=>({...{SUPABASE_URL:'https://db.invalid',SUPABASE_SERVICE_ROLE_KEY:'service-secret',OPENAI_API_KEY:'fake-key',DN_CONTINUOUS_LEARNING_ENABLED:'true'},...env})[name]},serve(){}}});
   function load(file) {
     if(cache[file]) return cache[file];
     let code=stripTypeScriptTypes(fs.readFileSync(file,'utf8'),{mode:'strip'});
@@ -69,6 +69,10 @@ test('missing authorization and invalid session never claim or call AI',async()=
 test('private scheduler can drain all owners and kill switch prevents costs',async()=>{
  const f=fixture();await loadWorker(f.fetch)(req('service-secret'));assert.equal(f.calls[0].body.p_user,null);
  const g=fixture();assert.equal((await loadWorker(g.fetch,{DN_CONTINUOUS_LEARNING_ENABLED:'false'})(req())).status,503);assert.equal(g.ai,0);assert.equal(g.calls.length,0);
+ for(const flag of [undefined,'TRUE','1','invalid','']) {
+  const h=fixture();assert.equal((await loadWorker(h.fetch,{DN_CONTINUOUS_LEARNING_ENABLED:flag})(req())).status,503);
+  assert.equal(h.ai,0);assert.equal(h.calls.length,0);
+ }
 });
 test('independent associations have independent fingerprints and remain without permission',async()=>{
  const f=fixture();f.output=result();f.output.associacoes.push({...f.output.associacoes[0],objeto:'energia'});
