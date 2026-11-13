@@ -17,10 +17,11 @@ async function database(){
  for(const item of manifest.baseline){
   const source=item.local_source?fs.readFileSync(path.join(ROOT,'supabase/migrations',item.local_source),'utf8'):null;
   const isContainment=item.version==='20261113065053';
+  const isActivation=item.version==='20261113083335';
   // O espelho da contencao exige assinatura PG17. Sua aplicacao ja foi homologada remotamente.
   // Na fixture PG16 preservamos apenas a declaracao EXATA de historico, sem reexecuta-la.
-  if(source&&!isContainment)await db.query(source);
-  const recorded=isContainment?source.slice(source.indexOf('DO $contain$')).trim():(item.remote_statements_md5?source:'original-remote-statements');
+  if(source&&!isContainment&&!isActivation)await db.query(source);
+  const recorded=isContainment?source.slice(source.indexOf('DO $contain$')).trim():(isActivation?source.trimEnd():(item.remote_statements_md5?source:'original-remote-statements'));
   await db.query('insert into supabase_migrations.schema_migrations values($1,$2,$3)',[item.version,item.name,[recorded]]);
  }
  return {name,db};
@@ -33,7 +34,7 @@ function apply(name,text){return spawnSync(path.join(TOOLS,'pg/usr/lib/postgresq
  if(!manifest.pending.length) {
    let r=apply(name,bundle);assert.equal(r.status,0,r.stderr);
    assert.deepEqual((await db.query('select * from supabase_migrations.schema_migrations order by version')).rows,before);
-   console.log('PASS remote baseline no-op, all 16 migrations preserved');passed++;
+   console.log('PASS remote baseline no-op, all 17 migrations preserved');passed++;
    assert.equal((await db.query('select label from public.fixture_station_house')).rows[0].label,'Estação fictícia preservada');
    console.log('PASS Estação Casa preserved');passed++;
    r=apply(name,fs.readFileSync(path.join(output,'validar.sql'),'utf8'));assert.equal(r.status,0,r.stderr);

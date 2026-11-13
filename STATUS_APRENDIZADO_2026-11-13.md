@@ -63,3 +63,22 @@ Não presumir que o código da branch já está em `main`.
 - O app público ainda requer publicação de frontend em GitHub Pages e teste pelo iPhone.
 - Captura automática, worker e política de uso do contexto permanecem contidos até validação de liberação controlada. A IA real mostrou falhas semânticas que justificaram o filtro adicional; o filtro passou nos casos testados, mas não é garantia universal.
 - Antes de ativar, confirmar critérios de aceitação, política de autorização humana, orçamento e diagnóstico de fila após publicação.
+
+---
+
+## Ativação operacional confirmada — 13/11/2026
+
+Esta seção prevalece sobre os estados de "pausado" e "pendente" das etapas anteriores, que foram preservados como histórico.
+
+- Publicação GitHub Pages: `main` atualizado e site conferido por comparação byte a byte de `index.html` e `dn-learning.js`. Frontend serve corretamente via HTTPS.
+- Banco: backup pré-ativação `~/.local/share/diarionegro/backups/diarionegro-pre-ativacao-20261113-053041.dump` com SHA-256 confirmado. Backups anteriores preservados.
+- Edge Function `aprender-registro`: versão 9 registrada no Supabase, verificação JWT habilitada, proteção de evidências, exclusão de falas de terceiros, sentimentos transitórios e perguntas nos casos testados.
+- Flag de servidor `DN_CONTINUOUS_LEARNING_ENABLED=true` configurada. Com gatilho ainda desligado, teste end-to-end via pg_net → Edge Function → RPC real: HTTP 200 `{"processed":0}`, sem consumir IA nem criar dados.
+- Gatilho `aprendizado_registro`: **habilitado**, estado `O`. Migration remota `20261113083335_ativar_captura_aprendizado_20261113` aplicada com guardas de estado, Vault, fila e cron. SQL espelhado localmente em `supabase/migrations/`.
+- Scheduler `dn-aprendizado-continuo`: ativo a cada 5 minutos, com três segredos no Vault. Chama o worker apenas quando houver trabalhos devidos.
+- Política de contexto: `dn_contexto_copiloto` continua usando somente memórias **confirmadas por humano**. O aprendizado pode coletar e registrar dados, mas não autoriza por conta própria o uso dessas novas memórias nas respostas do Copiloto.
+- Cota do worker: máximo de 8 tentativas de chamada ao modelo por dia, compartilhadas, com fila de retomada.
+- Estado no momento da ativação: **195 registros existentes, 9 memórias existentes, 0 itens pendentes**. Nenhum backfill/reanálise histórica, nenhum registro de teste inserido.
+- Homologação: 35 grupos de integração, 6 verificações de release, 11 testes do worker e 7 testes Python de publicação aprovados após sincronizar o histórico remoto.
+- Endpoint temporário `dn-learning-homologar` removido. Os únicos testes diretos ao modelo usaram frases inventadas, não dados do usuário.
+- Ainda pendente: observar o primeiro registro real no iPhone, confirmar finalização da fila, criação de fontes/memórias e revisão humana de possíveis falsos positivos. Não declarar que o primeiro aprendizado já aconteceu antes dessa evidência.

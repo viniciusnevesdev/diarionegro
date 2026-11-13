@@ -1,5 +1,5 @@
 {
-  "confirmed_by": "2026-11-13 verified remotely: 16 applied migrations, none pending; learning capture still disabled",
+  "confirmed_by": "Supabase read-only verified 17 migrations 2026-11-13 after activation and canary",
   "baseline": [
     {
       "version": "20261024181522",
@@ -105,6 +105,13 @@
       "local_source": "20261113073842_limitar_cota_aprendizado.sql",
       "sha256": "67e1d3d1f77e14b4d53a780f97e0341150073c682c67b0339009a997bd35b603",
       "remote_statements_md5": "a9950873f8e674b52b1ff8c16fc44baf"
+    },
+    {
+      "version": "20261113083335",
+      "name": "ativar_captura_aprendizado_20261113",
+      "local_source": "20261113083335_ativar_captura_aprendizado_20261113.sql",
+      "sha256": "b360e6dfcec742d488dc668934ba46827df98d50a943ff544e8e22af25cf6ce8",
+      "remote_statements_md5": "4b5c4c6a16df22ca9506a15b319feaf7"
     }
   ],
   "pending": []
