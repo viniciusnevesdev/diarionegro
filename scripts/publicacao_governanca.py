@@ -209,7 +209,11 @@ def tools_env(conf):
     uri = urlsplit(conf['DN_DATABASE_URL'])
     env.update(PGHOST=uri.hostname, PGPORT=str(uri.port or 5432), PGDATABASE=unquote(uri.path.lstrip('/') or 'postgres'), PGUSER=unquote(uri.username or 'postgres'), PGPASSWORD=unquote(uri.password or ''), PGSSLMODE='require', PGCONNECT_TIMEOUT='10', SUPABASE_ACCESS_TOKEN=conf['SUPABASE_ACCESS_TOKEN'])
     env['PATH'] = str(TOOLS / 'node-v22.16.0-linux-x64/bin') + os.pathsep + env.get('PATH','')
-    env['LD_LIBRARY_PATH'] = str(TOOLS / 'pg/usr/lib/x86_64-linux-gnu') + os.pathsep + env.get('LD_LIBRARY_PATH','')
+    # Never preload PostgreSQL 16 libpq into a native PostgreSQL 17 client.
+    if shutil.which('psql') and shutil.which('pg_dump'):
+        env.pop('LD_LIBRARY_PATH', None)
+    else:
+        env['LD_LIBRARY_PATH'] = str(TOOLS / 'pg/usr/lib/x86_64-linux-gnu') + os.pathsep + env.get('LD_LIBRARY_PATH','')
     return env
 
 
@@ -261,7 +265,7 @@ def remote(action, authorized):
             if digest(response.read()) != digest((ROOT / 'index.html').read_bytes()):
                 raise ValueError('O Pages ainda não serve o frontend preparado.')
         run([binary('psql'),'-X','-v','ON_ERROR_STOP=1','-f',str(output / 'validar.sql')],env,conf)
-        scheduler_check = "select 1 / case when exists(select 1 from cron.job where jobname='dn-aprendizado-continuo' and active) and (select count(*) from vault.decrypted_secrets where name in ('dn_learning_url','dn_learning_service_key'))=2 then 1 else 0 end;"
+        scheduler_check = "select 1 / case when exists(select 1 from cron.job where jobname='dn-aprendizado-continuo' and active) and (select count(*) from vault.decrypted_secrets where name in ('dn_learning_url','dn_learning_anon_jwt','dn_learning_scheduler_key') and nullif(trim(decrypted_secret),'') is not null)=3 then 1 else 0 end;"
         run([binary('psql'),'-X','-v','ON_ERROR_STOP=1','-c',scheduler_check],env,conf)
         run([cli,'secrets','set','DN_MEMORY_CONTEXT_ENABLED=true','DN_HISTORICAL_REANALYSIS_ENABLED=true','DN_CONTINUOUS_LEARNING_ENABLED=true','--project-ref',project],env,conf)
         print('Contexto e reanálise habilitados. Nenhuma reanálise foi executada.')

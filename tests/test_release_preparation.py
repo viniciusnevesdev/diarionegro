@@ -22,10 +22,12 @@ class ReleasePreparationTest(unittest.TestCase):
         self.assertEqual([x['version'] for x in manifest['baseline']], [
             '20261024181522','20261024204437','20261024204521','20261024224404',
             '20261027120000','20261027130000','20261027140000','20261027150000',
-            '20261027160000','20261107061434','20261107061831','20261109075552'])
+            '20261027160000','20261107061434','20261107061831','20261109075552',
+            '20261112220000','20261113065053','20261113071758','20261113073842'])
         self.assertEqual(manifest['baseline'][0]['name'], 'station_202610240001')
         self.assertIsNone(manifest['baseline'][0]['local_source'])
-        self.assertEqual([x['version'] for x in manifest['pending']], ['20261112220000'])
+        self.assertEqual([x['version'] for x in manifest['pending']], [])
+        self.assertEqual(len(manifest['baseline']), 16)
         sql = release.application_sql(manifest)
         self.assertIn("md5(array_to_string(statements,E'\\n'))='bca153983fd7b251a5d61172b4c1ba32'", sql)
         self.assertNotIn('create table if not exists public.memorias', sql)

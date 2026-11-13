@@ -4,10 +4,11 @@ const assert = require('node:assert/strict');
 const fs=require('node:fs'), path=require('node:path'), vm=require('node:vm');
 const {stripTypeScriptTypes}=require('node:module');
 const ROOT=path.resolve(__dirname,'..');
+const SCHEDULER_SECRET='local-test-scheduler-private-token-abcdefghijklmnopqrstuvwxyz123456';
 function loadWorker(fetch, env={}) {
   const cache={};
   const context=vm.createContext({Request,Response,AbortSignal,TextEncoder,crypto,structuredClone,fetch,
-    Deno:{env:{get:name=>({...{SUPABASE_URL:'https://db.invalid',SUPABASE_SERVICE_ROLE_KEY:'service-secret',OPENAI_API_KEY:'fake-key',DN_CONTINUOUS_LEARNING_ENABLED:'true'},...env})[name]},serve(){}}});
+    Deno:{env:{get:name=>({...{SUPABASE_URL:'https://db.invalid',SUPABASE_SERVICE_ROLE_KEY:'service-secret',OPENAI_API_KEY:'fake-key',DN_CONTINUOUS_LEARNING_ENABLED:'true',DN_LEARNING_SCHEDULER_KEY:SCHEDULER_SECRET},...env})[name]},serve(){}}});
   function load(file) {
     if(cache[file]) return cache[file];
     let code=stripTypeScriptTypes(fs.readFileSync(file,'utf8'),{mode:'strip'});
@@ -29,13 +30,14 @@ function fixture() {
   if(url.includes('api.openai.com')) {f.ai++; if(f.failAI) return Response.json({}, {status:429});return Response.json({output_text:JSON.stringify(f.output||result())});}
   const name=url.split('/').pop(), body=JSON.parse(options.body);f.calls.push({name,body});
   if(name==='dn_aprendizado_claim') return Response.json(f.job);
+  if(name==='dn_aprendizado_reservar_cota') return Response.json(!f.quotaDenied);
   if(name==='dn_aprendizado_checkpoint') { f.checkpoints++; if(f.failCheckpoint) return Response.json({}, {status:500});f.job.resultado=body.p_resultado; }
   if(name==='dn_aprendizado_aplicar') {if(f.failApply) return Response.json({}, {status:500});f.applied++;f.job=null;}
   return Response.json(null);
  };
  return f;
 }
-function req(token='user-token',body={}) {return new Request('https://edge.invalid',{method:'POST',headers:{Authorization:`Bearer ${token}`},body:JSON.stringify(body)});}
+function req(token='user-token',body={},scheduler='') {return new Request('https://edge.invalid',{method:'POST',headers:{Authorization:`Bearer ${token}`,...(scheduler?{'x-dn-scheduler':scheduler}:{})},body:JSON.stringify(body)});}
 test('new audio note learns immediately; source is server owned and no task API is called',async()=>{
  const f=fixture(), handle=loadWorker(f.fetch);
  assert.equal((await handle(req('user-token',{texto:'injected',user_id:'other'}))).status,200);
@@ -59,6 +61,14 @@ test('checkpoint failure never applies unpersisted extraction',async()=>{
 test('provider failure backs off without writing a memory',async()=>{
  const f=fixture();f.failAI=true;assert.equal((await loadWorker(f.fetch)(req())).status,503);assert.equal(f.checkpoints,0);assert.equal(f.applied,0);
 });
+test('daily exhausted budget never calls the language model',async()=>{
+ const f=fixture();f.quotaDenied=true;
+ const res=await loadWorker(f.fetch)(req());
+ assert.equal(res.status,503);
+ assert.equal(f.ai,0);
+ assert.equal(f.checkpoints,0);
+ assert.equal(f.applied,0);
+});
 test('fabricated evidence cannot reach persistence',async()=>{
  const f=fixture();f.output=result();f.output.memorias[0].evidencia='never said';assert.equal((await loadWorker(f.fetch)(req())).status,503);assert.equal(f.checkpoints,0);
 });
@@ -67,7 +77,9 @@ test('missing authorization and invalid session never claim or call AI',async()=
  const bad=loadWorker(async()=>Response.json({}, {status:401}));assert.equal((await bad(req())).status,401);
 });
 test('private scheduler can drain all owners and kill switch prevents costs',async()=>{
- const f=fixture();await loadWorker(f.fetch)(req('service-secret'));assert.equal(f.calls[0].body.p_user,null);
+ const f=fixture();await loadWorker(f.fetch)(req('public-anon-jwt',{},SCHEDULER_SECRET));assert.equal(f.calls[0].body.p_user,null);
+ const noBypass=fixture();await loadWorker(noBypass.fetch)(req('service-secret'));assert.equal(noBypass.calls[0].body.p_user,'owner');
+ const wrong=fixture();await loadWorker(wrong.fetch)(req('public-anon-jwt',{},'incorrect'));assert.equal(wrong.calls[0].body.p_user,'owner');
  const g=fixture();assert.equal((await loadWorker(g.fetch,{DN_CONTINUOUS_LEARNING_ENABLED:'false'})(req())).status,503);assert.equal(g.ai,0);assert.equal(g.calls.length,0);
  for(const flag of [undefined,'TRUE','1','invalid','']) {
   const h=fixture();assert.equal((await loadWorker(h.fetch,{DN_CONTINUOUS_LEARNING_ENABLED:flag})(req())).status,503);

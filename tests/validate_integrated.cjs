@@ -21,7 +21,9 @@ async function rpc(c,name,args){return (await c.query(`select public.${name}(${a
 async function expectError(fn, code){await assert.rejects(fn, e=>!code || e.code===code);}
 async function main(){
   assert(fs.existsSync(path.join(TOOLS,'data','PG_VERSION')), 'Disposable cluster marker required');
-  const history = fs.readdirSync(path.join(ROOT,'supabase/migrations')).filter(f=>f.endsWith('.sql')).sort();
+  // Contencao historica usa assinatura do PostgreSQL 17 remoto; a suite funcional testa
+  // o fluxo habilitado em banco descartavel, nunca reaplica essa contencao em producao.
+  const history = fs.readdirSync(path.join(ROOT,'supabase/migrations')).filter(f=>f.endsWith('.sql') && !f.includes('contencao_aprendizado_continuo')).sort();
   // Existing scenarios each own and roll back their roles/schema.
   for(const file of ['etapa1_associacoes_postgres.sql','etapa2_associacoes_postgres.sql','etapa3_contexto_postgres.sql']){
     const r=spawnSync(path.join(TOOLS,'pg/usr/lib/postgresql/16/bin/psql'),['-X','-h',PG.host,'-p',String(PG.port),'-U',PG.user,'-d','postgres','-v','ON_ERROR_STOP=1','-f',path.join(__dirname,file)],{env:{...process.env,LD_LIBRARY_PATH:path.join(TOOLS,'pg/usr/lib/x86_64-linux-gnu')},encoding:'utf8'});

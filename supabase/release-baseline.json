@@ -1,5 +1,5 @@
 {
-  "confirmed_by": "read-only pre-publication homologation on 2026-11-13",
+  "confirmed_by": "2026-11-13 verified remotely: 16 applied migrations, none pending; learning capture still disabled",
   "baseline": [
     {
       "version": "20261024181522",
@@ -77,14 +77,35 @@
       "name": "audio_transcricao_escolha_livre_e_rls",
       "local_source": null,
       "sha256": null
-    }
-  ],
-  "pending": [
+    },
     {
       "version": "20261112220000",
       "name": "aprendizado_continuo",
       "local_source": "20261112220000_aprendizado_continuo.sql",
-      "sha256": "034e12c3f9c728207c8ab6cef2a32f5539ea7ab1433f6ceea88a6ea71b3fe71e"
+      "sha256": "034e12c3f9c728207c8ab6cef2a32f5539ea7ab1433f6ceea88a6ea71b3fe71e",
+      "remote_statements_md5": "6ba142cd1cd81fb67f14f760d8337714"
+    },
+    {
+      "version": "20261113065053",
+      "name": "contencao_aprendizado_continuo_20261113",
+      "local_source": "20261113065053_contencao_aprendizado_continuo_20261113.sql",
+      "sha256": "9a64a5538e2b25df04c85e735e25a67dd28928d5eafef112e63c413b053d3423",
+      "remote_statements_md5": "155c5d8db46d97d5264c23f7a17a467e"
+    },
+    {
+      "version": "20261113071758",
+      "name": "redigir_fila_aprendizado",
+      "local_source": "20261113071758_redigir_fila_aprendizado.sql",
+      "sha256": "78ad9179295ba8735a8de095f46a5ef6dd663a4027ebec3553021b221ea68acf",
+      "remote_statements_md5": "c5ef20c46e4ad0aaf290b3f670564ad3"
+    },
+    {
+      "version": "20261113073842",
+      "name": "limitar_cota_aprendizado",
+      "local_source": "20261113073842_limitar_cota_aprendizado.sql",
+      "sha256": "67e1d3d1f77e14b4d53a780f97e0341150073c682c67b0339009a997bd35b603",
+      "remote_statements_md5": "a9950873f8e674b52b1ff8c16fc44baf"
     }
-  ]
+  ],
+  "pending": []
 }

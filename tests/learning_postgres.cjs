@@ -15,6 +15,10 @@ module.exports=async function({admin,A,B,rpc,asUser,test}) {
   job=await claim();assert(job);const other=await claim();assert.notEqual(other.id,job.id);
   await rpc(admin,'dn_aprendizado_falhou',[other.id,other.lease_token,'retry later']);
   await save(job,extraction([mem('Prefiro café','café')]));
+  const concluded=(await admin.query('select estado,texto,resultado from public.aprendizado_fila where id=$1',[job.id])).rows[0];
+  assert.equal(concluded.estado,'concluido');
+  assert.equal(concluded.texto,'');
+  assert.equal(concluded.resultado,null);
   const m=(await admin.query("select * from public.memorias where fingerprint='fixture:café'")).rows[0];
   firstId=m.id;assert.equal(m.ativa,true);assert.equal(m.confirmed_by_user,false);
   const ctx=await asUser(A,c=>rpc(c,'dn_contexto_copiloto',['learning-immediate','interpretar']));assert(ctx.memorias.some(x=>x.id===firstId));
@@ -75,6 +79,13 @@ module.exports=async function({admin,A,B,rpc,asUser,test}) {
    await assert.rejects(()=>asUser(A,c=>rpc(c,name,args)),e=>e.code==='42501');
   }
   await assert.rejects(()=>asUser(A,c=>c.query("update public.aprendizado_fila set resultado='{}'")),e=>e.code==='42501');
+ });
+ await test('continuous: daily OpenAI request budget is global and enforced atomically',async()=>{
+  const attempts=await Promise.all(Array.from({length:10},()=>rpc(admin,'dn_aprendizado_reservar_cota',[8])));
+  assert.equal(attempts.filter(Boolean).length,8);
+  assert.equal(attempts.filter(x=>!x).length,2);
+  assert.equal((await admin.query('select chamadas from public.aprendizado_cota_diaria where dia=(now() at time zone \'UTC\')::date')).rows[0].chamadas,8);
+  await assert.rejects(()=>asUser(A,c=>rpc(c,'dn_aprendizado_reservar_cota',[8])),e=>e.code==='42501');
  });
  // Remove only fixtures from this suite; subsequent legacy scenarios have a clean baseline.
  await admin.query('delete from public.associacoes where user_id=$1',[A]);
