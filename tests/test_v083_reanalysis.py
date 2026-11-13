@@ -3,7 +3,7 @@ import re
 ROOT=Path(__file__).resolve().parents[1]
 JS=(ROOT/'dn-memory-v083.js').read_text(encoding='utf-8')
 CSS=(ROOT/'dn-memory-v083.css').read_text(encoding='utf-8')
-EDGE=(ROOT/'supabase/functions/reanalisar-historico/index.ts').read_text(encoding='utf-8')
+EDGE=(ROOT/'supabase/functions/reanalisar-historico/index.ts').read_text(encoding='utf-8') + (ROOT/'supabase/functions/_shared/extracao.ts').read_text(encoding='utf-8')
 MIG=(ROOT/'supabase/migrations/20261024223500_create_reanalise_historica.sql').read_text(encoding='utf-8')
 TOKENS=(ROOT/'tokens.css').read_text(encoding='utf-8')
 ICONS=(ROOT/'MAPA_ICONES_V08.md').read_text(encoding='utf-8')

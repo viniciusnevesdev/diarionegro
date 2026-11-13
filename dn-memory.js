@@ -346,7 +346,17 @@
       safe.fingerprint = fingerprint(safe.texto);
       safe.canonical_key = canonicalKey(safe.texto, safe.tipo || 'outro');
     }
-    safe.metadata_json = { ...(patch.metadata_json || {}), action_origin: actionOrigin };
+    const { data: existing, error: existingError } = await client.from('memorias').select('metadata_json').eq('user_id', session.user.id).eq('id', id).single();
+    if (existingError) throw existingError;
+    safe.metadata_json = { ...(existing?.metadata_json || {}), ...(patch.metadata_json || {}), action_origin: actionOrigin };
+    // Uma edição humana invalida a identidade semântica extraída do texto anterior.
+    if (safe.texto) {
+      delete safe.metadata_json.valor; delete safe.metadata_json.aprendizado_automatico;
+      if (existing?.metadata_json?.aprendizado_automatico && actionOrigin === 'edicao_usuario') {
+        safe.origem = 'correcao_explicitamente_lembrada';
+        safe.confirmed_by_user = true; safe.confirmed_at = new Date().toISOString();
+      }
+    }
     const { data, error } = await client.from('memorias').update(safe).eq('user_id', session.user.id).eq('id', id).select('*').single();
     if (error) throw error;
     return data;
@@ -527,6 +537,8 @@
       <section id="dnMemoryPage" class="dn-settings-page dn-memory-page" aria-label="O que o Copiloto sabe sobre mim" hidden>
         <header class="dn-settings-header"><button type="button" class="dn-settings-back" id="dnMemoryBack" aria-label="Voltar para Ajustes"><span class="dn-settings-back-icon">${icon('chevron.right')}</span></button><h1>Memória do Copiloto</h1><button type="button" class="dn-memory-header-action" id="dnMemoryTeach">+ Ensinar</button></header>
         <div class="dn-memory-scroll">
+          <p class="dn-memory-muted">Novas anotações alimentam sua memória automaticamente. Declarações explícitas podem ser aprendidas; hipóteses aguardam sua confirmação. Você pode corrigir ou desativar qualquer memória.</p>
+          <p id="dnLearningStatus" class="dn-memory-status" role="status" aria-live="polite"></p>
           <section id="dnMemorySummary" class="dn-memory-summary" aria-live="polite"></section>
           <section id="dnAssociationsSection" class="dn-associations" aria-labelledby="dnAssociationsTitle">
             <div class="dn-associations-heading"><h2 id="dnAssociationsTitle">Associações</h2><p>Hipóteses da IA sobre relações entre acontecimentos. Confirme e autorize o uso separadamente.</p></div>

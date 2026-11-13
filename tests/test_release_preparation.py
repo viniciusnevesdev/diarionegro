@@ -22,7 +22,7 @@ class ReleasePreparationTest(unittest.TestCase):
         self.assertEqual([x['version'] for x in manifest['baseline']], ['20261024181522','20261024204437','20261024204521','20261024224404'])
         self.assertEqual(manifest['baseline'][0]['name'], 'station_202610240001')
         self.assertIsNone(manifest['baseline'][0]['local_source'])
-        self.assertEqual(len(manifest['pending']), 5)
+        self.assertEqual(len(manifest['pending']), 6)
         sql = release.application_sql(manifest)
         self.assertNotIn('create table if not exists public.memorias', sql)
         self.assertNotIn('migration repair', sql)
@@ -83,7 +83,7 @@ class ReleasePreparationTest(unittest.TestCase):
             self.assertLess(names.index('pg_dump'), names.index('supabase'))
             self.assertLess(names.index('pg_restore'), names.index('supabase'))
             deployment = [args for args in calls if args[:3] == ['supabase','functions','deploy']]
-            self.assertEqual([args[3] for args in deployment], ['copiloto','reanalisar-historico'])
+            self.assertEqual([args[3] for args in deployment], ['copiloto','reanalisar-historico','aprender-registro'])
             self.assertTrue(all('--use-api' in args and '--no-verify-jwt' not in args for args in deployment))
             self.assertEqual(names[-2:], ['psql','psql'])
 

@@ -56,6 +56,12 @@
       "name": "memoria_auditoria_cascata",
       "local_source": "20261027160000_memoria_auditoria_cascata.sql",
       "sha256": "4da997ed55d9e89edc522955fb4d146f031c35c7edda6881ce2cf47ab225e074"
+    },
+    {
+      "version": "20261112220000",
+      "name": "aprendizado_continuo",
+      "local_source": "20261112220000_aprendizado_continuo.sql",
+      "sha256": "ee0c94db0448f0db960fcd86b8585701db3a6d7407b3fc4118e63d6ac9f8649f"
     }
   ]
 }

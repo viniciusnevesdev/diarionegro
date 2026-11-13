@@ -6,3 +6,6 @@ verify_jwt = true
 
 [functions.reanalisar-historico]
 verify_jwt = true
+
+[functions.aprender-registro]
+verify_jwt = true

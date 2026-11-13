@@ -406,7 +406,9 @@
         const { error } = await client.from('registros').insert(sourceRecord);
         if (error) throw error;
       }
+      window.DN_LEARNING?.kick?.();
       const result = await invokeCopilot({ modo: 'interpretar', texto: text, ...interpretationContext() });
+      result.__continuousLearning = Boolean(window.DN_LEARNING);
       await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: false }, client);
       await processInterpretation(result, sourceRecord?.id || uid('src'));
       await window.DN_INTERPRETATIONS?.persist?.(sourceRecord.id, result, { origem: 'copiloto', effectsApplied: true }, client);
@@ -476,7 +478,7 @@
       try { await recordEvent('sessao_guiada_criada', activeSession); } catch {}
       renderActiveSession();
     }
-    for (const suggestion of result.memorias_sugeridas || []) {
+    for (const suggestion of (result.__continuousLearning ? [] : result.memorias_sugeridas) || []) {
       if (Number(suggestion.confianca || 0) < .7 || !suggestion.texto) continue;
       await saveMemoryWithFallback({
         texto: suggestion.texto, tipo: suggestion.tipo === 'local_objeto' ? 'objeto_lugar' : suggestion.tipo === 'regra' ? 'regra_pessoal' : suggestion.tipo === 'contexto_pessoal' ? 'contexto_vida' : suggestion.tipo,

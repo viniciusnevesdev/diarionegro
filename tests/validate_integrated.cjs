@@ -30,20 +30,21 @@ async function main(){
   }
   const bootstrap=new Client(PG);await bootstrap.connect();
   database='dn_validation_'+Date.now();await bootstrap.query('create database '+database);
-  for(const name of ['anon','authenticated'])if(!(await bootstrap.query('select 1 from pg_roles where rolname=$1',[name])).rowCount)await bootstrap.query('create role '+name+' nologin');
+  for(const name of ['anon','authenticated','service_role'])if(!(await bootstrap.query('select 1 from pg_roles where rolname=$1',[name])).rowCount)await bootstrap.query('create role '+name+' nologin');
   await bootstrap.end();
   admin=new Client({...PG,database});await admin.connect();
   await admin.query(`create schema auth; create table auth.users(id uuid primary key);
     create function auth.uid() returns uuid language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claim.sub',true),''), nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
     grant usage on schema auth to authenticated; grant execute on function auth.uid() to authenticated;`);
-  for(const file of history){await admin.query('begin');try{await admin.query(fs.readFileSync(path.join(ROOT,'supabase/migrations',file),'utf8'));await admin.query('commit');}catch(e){await admin.query('rollback');throw new Error(file+': '+e.message);}}
-  console.log('PASS ordered migrations: '+history.join(', '));passed++;
-  await admin.query(`insert into auth.users values ($1),($2)`,[A,B]);
   // Test-only source table: absent from repository migrations, never assumed to match production.
   await admin.query(`create table public.registros(id text primary key,user_id uuid not null references auth.users(id) on delete cascade,registrado_em timestamptz default now(),texto_original text not null,entrada text default 'texto',origem text default 'teste');
     alter table public.registros enable row level security; grant select,insert on public.registros to authenticated;
     create policy fixture_read on public.registros for select to authenticated using(user_id=auth.uid());
     create policy fixture_insert on public.registros for insert to authenticated with check(user_id=auth.uid());`);
+  for(const file of history){await admin.query('begin');try{await admin.query(fs.readFileSync(path.join(ROOT,'supabase/migrations',file),'utf8'));await admin.query('commit');}catch(e){await admin.query('rollback');throw new Error(file+': '+e.message);}}
+  console.log('PASS ordered migrations: '+history.join(', '));passed++;
+  await admin.query(`insert into auth.users values ($1),($2)`,[A,B]);
+  await require('./learning_postgres.cjs')({admin,A,B,rpc,asUser,test});
   const run=await asUser(A,c=>c.query("insert into public.reanalisacoes(user_id,context_version) values($1,'test') returning id",[A]));
   const runA=run.rows[0].id;
   await asUser(B,c=>c.query("insert into public.memorias(user_id,texto,origem,fingerprint,canonical_key) values($1,'B-private-memory','outra','B-private','B-private')",[B]));

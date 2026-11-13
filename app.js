@@ -310,7 +310,8 @@
     };
     const { error } = await client.from('registros').insert(row);
     if (error) throw error;
-    await loadRecords();
+    window.dispatchEvent(new CustomEvent('dn:record-saved'));
+    try { await loadRecords(); } catch (error) { console.warn('Registro salvo; atualização visual pendente:', error); }
     return row;
   };
   window.DN_APP_API.getTasks = () => tasks.map((item) => ({ ...item }));
@@ -1104,6 +1105,7 @@
     client.auth.onAuthStateChange((_event, newSession) => {
       session = newSession;
       if (session) {
+        setTimeout(() => window.DN_LEARNING?.kick?.(), 0);
         closeLogin();
         accountEmail.textContent = session.user?.email || 'Conta conectada';
         setTimeout(() => Promise.all([loadRecords(), loadAppState()]), 0);
@@ -1177,6 +1179,7 @@
     if (error) return showError(registerError, error.message);
 
     registerDialog.close();
+    window.dispatchEvent(new CustomEvent('dn:record-saved'));
     showToast('Registro salvo');
     await loadRecords();
     if (!timelineView.hidden) await refreshTimelineNew({ scrollToPresent: true });

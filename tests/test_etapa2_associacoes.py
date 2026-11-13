@@ -6,7 +6,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 JS = (ROOT / 'dn-memory-v083.js').read_text()
-EDGE = (ROOT / 'supabase/functions/reanalisar-historico/index.ts').read_text()
+EDGE = (ROOT / 'supabase/functions/reanalisar-historico/index.ts').read_text() + (ROOT / 'supabase/functions/_shared/extracao.ts').read_text()
 SQL = (ROOT / 'supabase/migrations/20261027130000_associacoes_reencontros.sql').read_text()
 
 
