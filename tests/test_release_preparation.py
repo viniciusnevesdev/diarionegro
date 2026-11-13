@@ -50,6 +50,11 @@ class ReleasePreparationTest(unittest.TestCase):
         for target in ('CONTEXTO_PESSOAL_V08.md','supabase','tests','scripts','dist','.agents','.aws','.codex'):
             self.assertIn(target, cfg['exclude'])
 
+    def test_renamed_github_pages_url_in_release_guard(self):
+        script=(ROOT/'scripts/publicacao_governanca.py').read_text()
+        self.assertIn('https://viniciusnevesdev.github.io/ecossistema-copiloto/',script)
+        self.assertNotIn('https://viniciusnevesdev.github.io/diarionegro/',script)
+
     def test_frontend_references_and_archive(self):
         files = set(release.public_files())
         html = (ROOT / 'index.html').read_text()

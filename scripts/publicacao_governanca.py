@@ -261,7 +261,7 @@ def remote(action, authorized):
         pointer = STATE / 'latest.json'
         if not pointer.exists() or json.loads(pointer.read_text()).get('backend_signature') != backend_signature(output):
             raise ValueError('Não há recibo de implantação deste pacote.')
-        with urlopen('https://viniciusnevesdev.github.io/diarionegro/',timeout=30) as response:
+        with urlopen('https://viniciusnevesdev.github.io/ecossistema-copiloto/',timeout=30) as response:
             if digest(response.read()) != digest((ROOT / 'index.html').read_bytes()):
                 raise ValueError('O Pages ainda não serve o frontend preparado.')
         run([binary('psql'),'-X','-v','ON_ERROR_STOP=1','-f',str(output / 'validar.sql')],env,conf)
