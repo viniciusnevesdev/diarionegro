@@ -69,6 +69,26 @@ test('daily exhausted budget never calls the language model',async()=>{
  assert.equal(f.checkpoints,0);
  assert.equal(f.applied,0);
 });
+test('source guard rejects third-party quotations, temporary feelings and questions',async()=>{
+ const f=fixture();
+ f.job.texto='Minha colega disse: prefiro chá. Eu prefiro café. Hoje me senti feliz. Será que vou morar em Salvador?';
+ f.output={...result(),
+  memorias:[
+   {...memory,texto:'Eu prefiro café.',evidencia:'Eu prefiro café.'},
+   {...memory,texto:'Minha colega disse: prefiro chá.',evidencia:'Minha colega disse: prefiro chá.'},
+   {...memory,texto:'prefiro chá.',evidencia:'prefiro chá.'},
+   {...memory,texto:'Hoje me senti feliz.',evidencia:'Hoje me senti feliz.'},
+   {...memory,texto:'Será que vou morar em Salvador?',evidencia:'Será que vou morar em Salvador?'}
+  ],
+  associacoes:[{sujeito:'colega',relacao:'disse',objeto:'chá',evidencia:'prefiro chá.',justificativa:'Terceira pessoa',confianca:0.7}]
+ };
+ const response=await loadWorker(f.fetch)(req());
+ assert.equal(response.status,200);
+ const saved=f.calls.find(x=>x.name==='dn_aprendizado_checkpoint').body.p_resultado;
+ assert.deepEqual(saved.memorias.map(m=>m.texto),['Eu prefiro café.']);
+ assert.equal(saved.associacoes.length,0);
+ assert.equal(saved._meta.descartadas_pela_protecao,5);
+});
 test('fabricated evidence cannot reach persistence',async()=>{
  const f=fixture();f.output=result();f.output.memorias[0].evidencia='never said';assert.equal((await loadWorker(f.fetch)(req())).status,503);assert.equal(f.checkpoints,0);
 });

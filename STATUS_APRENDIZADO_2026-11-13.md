@@ -40,3 +40,26 @@ Nenhum usuário de teste nem registro fictício foi inserido no banco real.
 ## Restrições
 Não excluir registros pessoais, não usar force-push, não repetir migrations aplicadas, não reativar o sistema antes dos testes obrigatórios.
 Não presumir que o código da branch já está em `main`.
+
+---
+
+## Atualização da retentativa — 13/11/2026 (substitui o estado operacional antigo acima)
+
+- Supabase Vault: **3/3 entradas configuradas e verificadas** (`dn_learning_url`, `dn_learning_anon_jwt`, `dn_learning_scheduler_key`). A chave privada existe também no ambiente do worker; nunca registrar valores.
+- Agendamento pg_cron: `dn-aprendizado-continuo` instalado, **ativo**, com expressão `*/5 * * * *`. Sem trabalho devido, não envia chamadas. A captura de registros continua desabilitada e o worker continua pausado por `DN_CONTINUOUS_LEARNING_ENABLED=false`.
+- Teste de comunicação banco → Edge Function usando JWT e segredo do Vault: HTTP **503, Aprendizado pausado** (esperado), sem chamada ao modelo.
+- Teste real de IA, **seis solicitações com frases totalmente fictícias**:
+  * Primeira rodada: três saídas com evidências literais, porém classificações indevidas de emoção passageira, pergunta e fala de terceiro.
+  * Segunda rodada: preferência duradoura identificada corretamente; pergunta e emoção transitória excluídas; ainda houve erro com frase de terceiro.
+  * Novo filtro independente `sourceEligible` no worker descarta evidências que representem perguntas, relatos temporários e fala citada. O caso de terceiro foi reproduzido em teste unitário com descarte da informação falsa. Evidência inventada continua bloqueada.
+  * Após correção, suíte de worker **11/11 aprovada**, além da suíte local completa.
+- Backend `aprender-registro` versão **8** implantada com novo prompt e filtro, `verify_jwt=true`.
+- Endpoint temporário para homologação `dn-learning-homologar` **excluído** ao finalizar, sem dados pessoais.
+- Conferência remota após os testes: **195 registros pessoais**, **9 memórias**, **0 itens na fila**, 3 segredos Vault, 1 agendamento cron. A diferença de 193 para 195 registros ocorreu durante a conversa, sem atribuirmos origem e sem inspecionar conteúdo.
+- Migrações de privacidade e cota já aplicadas; os limites de **8 tentativas por dia** valem para o worker, não para a função de teste removida.
+- Todos os dados pessoais, a Estação Casa e o Cronômetro preservados. Nenhuma memória foi criada por testes sintéticos.
+
+### Pendências atualizadas
+- O app público ainda requer publicação de frontend em GitHub Pages e teste pelo iPhone.
+- Captura automática, worker e política de uso do contexto permanecem contidos até validação de liberação controlada. A IA real mostrou falhas semânticas que justificaram o filtro adicional; o filtro passou nos casos testados, mas não é garantia universal.
+- Antes de ativar, confirmar critérios de aceitação, política de autorização humana, orçamento e diagnóstico de fila após publicação.
