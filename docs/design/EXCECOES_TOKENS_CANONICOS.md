@@ -103,3 +103,19 @@ Ao atualizar a **Matriz do Ecossistema Copiloto** conforme MMU V0.0.13, incorpor
 - A versão rígida de 54px foi rejeitada após teste real.
 - Pendência: confirmar o novo resultado no Safari.
 - Registrar na próxima Matriz; não atualizar a Matriz agora.
+
+
+### Barra inferior V4 — compactação da V3
+
+- Decisão: reduzir apenas medidas, sem modificar a hierarquia V3.
+- Grid de cinco colunas preservado.
+- Stacks verticais preservadas.
+- Altura automática preservada.
+- Ícones laterais: 29px → 26px.
+- Rótulos: 10,5px → 9,5px.
+- Botão central circular: 54px → 49px.
+- Padding e gaps reduzidos proporcionalmente.
+- Gradiente, cores, ícones e funções preservados.
+- A versão rígida anterior de 54px continua reprovada.
+- Validação final no Safari do iPhone 12 Pro Max pendente.
+- Incorporar à próxima Matriz do Ecossistema.
