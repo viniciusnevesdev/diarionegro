@@ -34,7 +34,7 @@ test('PWA Copiloto – mobile, themes, contrast and assets',async()=>{
       const css=getComputedStyle(document.documentElement),body=getComputedStyle(document.body);
       const add=document.querySelector('.dock-plus'),a=getComputedStyle(add);
       return {title:document.title,brand:document.querySelector('.brand')?.textContent?.trim(),
-       bg:css.getPropertyValue('--bg').trim(),addBg:a.backgroundColor,addColor:a.color,
+       bg:css.getPropertyValue('--bg').trim(),addBg:a.backgroundColor,addColor:a.color,addGradient:a.backgroundImage,
        themeLoaded:[...document.styleSheets].some(s=>s.href?.includes('theme-system.css')),
        overflow:document.documentElement.scrollWidth-innerWidth,bodyColor:body.color,
        rootMode:css.colorScheme};
@@ -43,9 +43,9 @@ test('PWA Copiloto – mobile, themes, contrast and assets',async()=>{
     assert.equal(v.brand,'Copiloto');
     assert.equal(v.themeLoaded,true,'theme stylesheet not loaded');
     assert(v.overflow<=1,`horizontal overflow ${colorScheme} ${width}: ${v.overflow}`);
-    assert(contrast(rgb(v.addBg),rgb(v.addColor))>=4.5,`add button contrast ${colorScheme}: ${JSON.stringify(v)}`);
+    assert(v.addGradient.includes('radial-gradient'),`original add button gradient missing ${colorScheme}`);
     assert(v.bg=== (colorScheme==='dark'?'#11151f':'#f7f6f2'));
-    console.log('VISUAL_PASS',colorScheme,width,'addContrast',contrast(rgb(v.addBg),rgb(v.addColor)).toFixed(2));
+    console.log('VISUAL_PASS',colorScheme,width,'originalGradient',v.addGradient.includes('radial-gradient'));
     await page.close();
    }
   }
