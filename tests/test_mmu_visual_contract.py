@@ -16,7 +16,7 @@ class MMUDesignContract(unittest.TestCase):
             self.assertEqual([v.lower() for v in values],[hex_code.lower()],token)
         style=(ROOT/'style.css').read_text()
         self.assertIn('min-height: 36px;',style)
-        self.assertIn('radial-gradient(80% 110% at 50% 68%',style)
+        self.assertRegex(style, r'radial-gradient\(\s*80%\s+110%\s+at\s+50%\s+68%\s*,')
         self.assertNotIn('--action-add:',css)
         self.assertIn('docs/DESIGN_CANONICO_PWA.md',(ROOT/'AGENTS.md').read_text())
 

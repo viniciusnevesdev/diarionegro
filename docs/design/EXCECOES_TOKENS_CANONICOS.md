@@ -76,7 +76,7 @@ Ao atualizar a **Matriz do Ecossistema Copiloto** conforme MMU V0.0.13, incorpor
 - Pendente: validação física no Safari/PWA do iPhone 12 Pro Max.
 
 
-### Revisão compacta da barra — 13/11/2026
+### Revisão compacta da barra — 13/11/2026 (histórico: reprovada visualmente)
 
 - Altura da barra reduzida de 70 para 54px.
 - Ícones laterais aumentados de 25 para 29px.
@@ -86,3 +86,20 @@ Ao atualizar a **Matriz do Ecossistema Copiloto** conforme MMU V0.0.13, incorpor
 - Textos, cores, gradientes e funções preservados.
 - Referência: segunda captura real do iPhone 12 Pro Max.
 - Validação visual final no Safari ainda necessária.
+
+
+### Barra hierárquica V3 — aprovada para implementação
+
+- Escopo: somente barra inferior do Copiloto.
+- Estrutura: Grid pai com cinco colunas.
+- Quatro abas: stacks verticais com ícone e texto.
+- Centro: círculo 54px, somente ícone +.
+- Altura do pai automática, determinada pelo conteúdo.
+- Espaçamento controlado pelo pai e pelas stacks.
+- Sem elevação ou corte de rótulos.
+- Ícones laterais 29px; rótulos 10,5px.
+- Cores, gradiente, funções e eventos preservados.
+- Referência: capturas do iPhone 12 Pro Max.
+- A versão rígida de 54px foi rejeitada após teste real.
+- Pendência: confirmar o novo resultado no Safari.
+- Registrar na próxima Matriz; não atualizar a Matriz agora.
