@@ -68,9 +68,21 @@ Ao atualizar a **Matriz do Ecossistema Copiloto** conforme MMU V0.0.13, incorpor
 ## Barra inferior — exceção aprovada (13/11/2026)
 
 - Referência: captura real do iPhone 12 Pro Max compartilhada pelo proprietário.
-- `.bottom-dock`: grade de cinco posições, altura 70px, raio 30px, centro 64px; não aplicar `display:flex !important`.
+- `.bottom-dock`: grade de cinco posições, altura 54px, raio 30px, centro 64px; não aplicar `display:flex !important`.
 - `.dock-plus`: círculo 58×58px, raio 50%, sem elevação; somente ícone `+`, nome acessível preservado; gradiente escuro e brilho originais mantidos.
 - Segunda aba: rótulo visível `Histórico`; lógica e dados de registros preservados.
 - Itens laterais: texto 10.5px; distribuição simétrica.
 - São exceções canônicas locais, não tokens globais.
 - Pendente: validação física no Safari/PWA do iPhone 12 Pro Max.
+
+
+### Revisão compacta da barra — 13/11/2026
+
+- Altura da barra reduzida de 70 para 54px.
+- Ícones laterais aumentados de 25 para 29px.
+- Altura dos itens laterais reduzida de 56 para 46px.
+- Botão central circular permanece com 58px, sem elevação.
+- Barra permite transbordamento visual do círculo.
+- Textos, cores, gradientes e funções preservados.
+- Referência: segunda captura real do iPhone 12 Pro Max.
+- Validação visual final no Safari ainda necessária.

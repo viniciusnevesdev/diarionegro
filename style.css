@@ -922,23 +922,24 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
 /* Barra inferior: baixa, legível e com Adicionar como ação central. */
 .bottom-dock {
   width:min(calc(100vw - 20px),406px);
-  min-height:70px;
-  height:70px;
+  min-height:54px;
+  height:54px;
   border-radius:30px;
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) 64px minmax(0,1fr) minmax(0,1fr);
-  padding:5px 8px;
+  padding:4px 8px;
+  overflow:visible;
   background:rgba(247,246,250,.74);
 }
 .dock-item {
   position:relative;
-  height:56px;
+  height:46px;
   gap:3px;
   font-size:10.5px;
   line-height:1.15;
 }
 .dock-item .dn-symbol,
-.dock-item > span[data-dn-symbol] { width:27px; height:27px; display:grid; place-items:center; line-height:0; }
-.dock-item svg { display:block; width:25px; height:25px; margin:auto; }
+.dock-item > span[data-dn-symbol] { width:30px; height:30px; display:grid; place-items:center; line-height:0; }
+.dock-item svg { display:block; width:29px; height:29px; margin:auto; }
 .dock-item.active::before { width:42px; height:42px; }
 .dock-plus {
   width:58px;
