@@ -3,24 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f7f6f2">
+  <script src="theme-preference.js?v=20261113-restauracao-v1"></script>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Copiloto" />
   <title>Copiloto</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <link rel="stylesheet" href="tokens.css?v=20261113-mmu-v1" />
-  <link rel="stylesheet" href="style.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="tokens.css?v=20261113-restauracao-v1" />
+  <link rel="stylesheet" href="style.css?v=20261113-restauracao-v1" />
   <link rel="stylesheet" href="copiloto.css?v=20261113-mmu-v1" />
-  <link rel="stylesheet" href="settings.css?v=20261113-mmu-v1" />
-  <link rel="stylesheet" href="dn-memory.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="settings.css?v=20261113-restauracao-v1" />
+  <link rel="stylesheet" href="dn-memory.css?v=20261113-restauracao-v1" />
   <link rel="stylesheet" href="dn-memory-v083.css?v=20261113-mmu-v1" />
-  <link rel="stylesheet" href="theme-system.css?v=20261113-mmu-v1" />
+  <link rel="stylesheet" href="theme-system.css?v=20261113-restauracao-v1" />
   <!-- DN_VERSION_SYSTEM_START -->
   <meta name="dn-version" content="0.8.3" />
-  <meta name="dn-build" content="20261113-mmu-v1" />
+  <meta name="dn-build" content="20261113-restauracao-v1" />
   <!-- DN_VERSION_SYSTEM_END -->
 </head>
 <body>
@@ -433,12 +433,15 @@
         <section class="dn-settings-section">
           <div class="dn-settings-section-title">APARÊNCIA</div>
           <div class="dn-settings-card glass-card">
-            <div class="dn-settings-static-row">
-              <div class="dn-settings-row-copy">
-                <strong>Aparência do Copiloto</strong>
-                <small>Mais opções serão adicionadas aqui.</small>
+            <fieldset class="copiloto-theme-setting" aria-describedby="copilotoThemeDescription">
+              <legend>Aparência do Copiloto</legend>
+              <div class="copiloto-theme-options" role="group" aria-label="Selecionar aparência">
+                <label class="copiloto-theme-option"><input type="radio" name="copilotoTheme" value="light"><span>Claro</span></label>
+                <label class="copiloto-theme-option"><input type="radio" name="copilotoTheme" value="dark"><span>Escuro</span></label>
+                <label class="copiloto-theme-option"><input type="radio" name="copilotoTheme" value="auto" checked><span>Automático</span></label>
               </div>
-            </div>
+              <small id="copilotoThemeDescription" aria-live="polite">Segue a aparência definida no iPhone.</small>
+            </fieldset>
           </div>
         </section>
 

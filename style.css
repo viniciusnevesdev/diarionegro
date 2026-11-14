@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
 }
 
@@ -48,7 +48,7 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
 .brand { margin: 0; font-size: 42px; line-height: .92; letter-spacing: -2.5px; font-weight: 760; }
 .brand span { color: #5c6072; }
 .brand--copiloto { font-size: clamp(27px, 7.1vw, 36px); letter-spacing: -.055em; white-space: nowrap; }
-.tagline { margin: 13px 0 0; color: var(--muted); font-size: 15px; line-height: 1.28; }
+.tagline { margin: 13px 0 0; color: #83889a; font-size: 15px; line-height: 1.28; }
 .top-actions { display: flex; gap: 9px; padding-top: 4px; }
 .glass { background: rgba(255,255,255,.44); border: 1px solid rgba(255,255,255,.78); box-shadow: 0 8px 24px rgba(69,63,91,.08), inset 0 1px 0 rgba(255,255,255,.85); }
 .icon-btn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; backdrop-filter: blur(16px) saturate(1.12); }
@@ -91,7 +91,7 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
 .eyebrow { color: #666d87; font-size: 11px; font-weight: 620; letter-spacing: .02em; }
 .greeting-copy h2 { margin: 3px 0 2px; font-size: 22px; letter-spacing: -.4px; }
 .greeting-copy p { margin: 0; color: #626a82; font-size: 13px; }
-.primary-btn { min-height: 48px; padding: 0 18px; border-radius: 999px; background: var(--color-primary); color: var(--on-primary); display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 28px rgba(20,21,36,.19), inset 0 1px 0 rgba(255,255,255,.12); }
+.primary-btn { min-height: 48px; padding: 0 18px; border-radius: 999px; background: #111526; color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 28px rgba(20,21,36,.19), inset 0 1px 0 rgba(255,255,255,.12); }
 .primary-btn svg { width: 20px; height: 20px; }
 
 .section-block { margin-bottom: 20px; }
@@ -540,14 +540,14 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
   align-items: center;
   justify-content: center;
 }
-.danger-btn { background: var(--color-danger); color: var(--on-danger); box-shadow: 0 10px 24px var(--color-danger-soft); }
-.success-btn { background: var(--color-success); color: var(--on-success); }
-.ghost-danger-btn { background: var(--color-danger-soft); color: var(--color-danger); }
+.danger-btn { background: #d94755; color: #fff; box-shadow: 0 10px 24px rgba(190,52,68,.18); }
+.success-btn { background: #daf1e4; color: #17613e; }
+.ghost-danger-btn { background: rgba(255,226,230,.68); color: #a72d40; }
 .mini-add-btn {
-  min-height: 44px;
+  min-height: 36px;
   padding: 0 12px;
-  background: var(--action-add);
-  color: var(--on-action-add);
+  background: rgba(229,233,243,.76);
+  color: #34394a;
   font-size: 11px;
 }
 .manager-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -951,9 +951,8 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1
   gap:5px;
   transform:translateY(-10px);
   padding:0 12px;
-  background:var(--action-add);
-  color:var(--on-action-add);
-  box-shadow:0 13px 30px rgba(11,12,20,.19),inset 0 1px 1px rgba(255,255,255,.30);
+  background:radial-gradient(80% 110% at 50% 68%,#20222a 0 36%,#10121b 67%,#03040a 100%);
+  box-shadow:0 13px 30px rgba(11,12,20,.29),inset 0 1px 1px rgba(255,255,255,.20),0 0 0 1px rgba(255,194,89,.08);
 }
 .dock-plus .dn-symbol { width:22px; height:22px; display:grid; place-items:center; }
 .dock-plus svg { width:21px; height:21px; }

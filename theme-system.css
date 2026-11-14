@@ -1,94 +1,221 @@
-/* Copiloto — sobreposições de componentes por tema.
- * Tokens globais APENAS em tokens.css (MMU V0.0.13).
- * Sem novos ícones nem substituição de identidade visual já aprovada.
- */
-@media (prefers-color-scheme: dark) {
-  html, body { background-color: var(--bg); color: var(--ink); }
-  body {
-    background:
-      radial-gradient(72% 40% at 82% 15%, rgba(75,78,127,.22), transparent 68%),
-      radial-gradient(56% 40% at 9% 72%, rgba(61,106,139,.14), transparent 70%),
-      linear-gradient(180deg,#131925 0%,#10141f 100%);
-  }
-  .ambient { opacity: .22; }
-  .brand span, .tagline, .eyebrow { color: var(--muted); }
-  .glass, .glass-card, .assistant-card, .greeting-card {
-    background-color: var(--glass);
-    border-color: var(--border);
-    box-shadow: var(--shadow);
-  }
-  .glass-card::before, .greeting-card::before { opacity: .3; }
-  .icon-btn.glass { background: var(--surface-card); color: var(--ink); }
-  .bottom-dock {
-    background: var(--surface-card);
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 24px rgba(0,0,0,.25);
-  }
-  .dock-item { color: var(--muted); }
-  .dock-item.active { color: var(--ink); }
-  .dock-plus { background: var(--action-add); color: var(--on-action-add); }
-  .dn-settings-page, .dn-settings-dialog {
-    background: linear-gradient(180deg,#161d2a,#10151f);
-    color: var(--ink);
-  }
-  .dn-settings-header {
-    background: rgba(23,29,43,.92);
-    color: var(--ink);
-    border-color: var(--border);
-  }
-  .dn-settings-header h1,.dn-settings-back,
-  .dn-settings-row,.dn-settings-static-row,
-  .dn-settings-card,.dn-settings-card strong { color: var(--ink); }
-  .dn-settings-section-title,.dn-settings-row small,.dn-settings-static-row small {
-    color: var(--muted);
-  }
-  .dn-settings-card,.dn-settings-row,.dn-settings-static-row {
-    background: var(--surface-card);
-    border-color: var(--border);
-  }
-  .dn-memory-page,.dn-memory-summary,.dn-memory-toolbar,
-  .dn-memory-card,.dn-memory-detail,.dn-memory-empty,.dn-memory-loading,
-  .dn-memory-categories,.dn-base-context article,
-  .dn-memory-evidence,.dn-reanalysis-card,.dn-memory-learning-card {
-    background-color: var(--surface-card);
-    border-color: var(--border);
-  }
-  .app-shell :is(
-    .greeting-copy h2,.section-heading h2,.assistant-title h2,
-    .dn-memory-card h3,.dn-memory-card strong,.dn-memory-summary b,
-    .dn-memory-detail-heading,.dn-memory-detail-section h3,
-    .dn-base-context article strong,.dn-settings-row strong,
-    .dn-settings-page h1,.dn-memory-empty strong,.manager-heading h2
-  ) { color: var(--ink); }
-  .app-shell :is(
-    .greeting-copy p,.section-heading .text-btn,
-    .dn-memory-card p,.dn-memory-card-top,.dn-memory-categories,
-    .dn-memory-status,.dn-memory-meta,.dn-memory-detail-section p,
-    .dn-base-context article p,.dn-base-context article small,
-    .dn-memory-evidence p,.dn-memory-evidence span,
-    .dn-settings-row small,.dn-settings-static-row small
-  ) { color: var(--muted); }
-  :is(input,textarea,select,.field-input,.dn-memory-search,.dn-memory-search input,
-  .dn-memory-advanced-filters select,.dn-memory-advanced-filters input) {
-    background-color: var(--surface-card);
-    color: var(--ink);
-    border-color: var(--border);
-  }
-  :is(.demo-sheet,.auth-sheet,.form-sheet,.detail-sheet,.manager-sheet,
-    .icon-picker-sheet,.task-icon-choice,.task-detail-icon,.dn-memory-more) {
-    background: var(--surface-card);
-    color: var(--ink);
-    border-color: var(--border);
-  }
-  :is(.dn-memory-more,.dn-memory-card-actions button,.dn-memory-quality summary,
-   .dn-memory-advanced-filters summary,.dn-memory-maintenance summary) {
-    color: var(--ink);
-  }
+/* Correção localizada: o modo CLARO mantém integralmente o design aprovado em
+   66dfa01. Não redefinir as cinco cores semânticas canônicas. */
+
+/* Exceção de componente: opções novas ficam dentro do cartão existente. */
+.copiloto-theme-setting {
+  margin: 0;
+  padding: 14px;
+  border: 0;
+  min-width: 0;
 }
+.copiloto-theme-setting legend {
+  padding: 12px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.copiloto-theme-setting > small {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.copiloto-theme-options { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; margin-top: 11px; }
+.copiloto-theme-option { display: block; position: relative; min-width: 0; cursor: pointer; }
+.copiloto-theme-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.copiloto-theme-option span {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  padding: 7px 4px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--glass);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.copiloto-theme-option input:checked + span {
+  background: #111526; /* primária canônica do PWA */
+  border-color: #111526;
+  color: white;
+}
+.copiloto-theme-option input:focus-visible + span { outline: 2px solid var(--color-info); outline-offset: 3px; }
+
+/* Tema ESCURO: somente cores já existentes no PWA, tokens semânticos
+   originais mantidos, sem alterar altura de botões ou layout. */
+:root[data-theme="dark"] html,
+:root[data-theme="dark"] body { background-color: var(--bg); color: var(--ink); }
+:root[data-theme="dark"] body {
+  background: linear-gradient(180deg,#11151f 0%,#10121b 100%);
+}
+:root[data-theme="dark"] body::after { opacity: .035; mix-blend-mode: screen; }
+:root[data-theme="dark"] .ambient { opacity: .20; }
+:root[data-theme="dark"] :is(.brand span,.tagline,.eyebrow,.greeting-copy p,.section-heading .text-btn) { color: var(--muted); }
+:root[data-theme="dark"] :is(.glass,.glass-card,.assistant-card,.greeting-card) {
+  background-color: var(--glass);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+:root[data-theme="dark"] :is(.glass-card,.greeting-card)::before { opacity: .20; }
+:root[data-theme="dark"] :is(.icon-btn.glass,.dn-copilot-icon-btn,.dn-copilot-title-icon) {
+  color: var(--ink); background: var(--glass-strong); border-color: var(--line);
+}
+:root[data-theme="dark"] .bottom-dock {
+  background: var(--glass-strong); border-color: var(--line);
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+}
+:root[data-theme="dark"] .dock-item { color: var(--muted); }
+:root[data-theme="dark"] .dock-item.active { color: var(--ink); }
+/* .dock-plus permanece EXATAMENTE com o gradiente escuro canônico. */
+:root[data-theme="dark"] :is(.dn-settings-page,.dn-settings-dialog) {
+  color: var(--ink); background: linear-gradient(180deg,#11151f,#10121b);
+}
+:root[data-theme="dark"] .dn-settings-header {
+  color: var(--ink); background: rgba(26,32,48,.96); border-color: var(--line);
+}
+:root[data-theme="dark"] :is(.dn-settings-back,.dn-settings-header h1,.dn-settings-row,
+  .dn-settings-static-row,.dn-settings-card,.dn-settings-row-copy strong,.dn-settings-section-title) { color: var(--ink); }
+:root[data-theme="dark"] :is(.dn-settings-card,.dn-phrase-item,.dn-phrase-tool,
+  .dn-settings-add,.dn-settings-toggle-row,.dn-stt-option span) {
+  background: var(--glass-strong); border-color: var(--line); color: var(--ink);
+}
+:root[data-theme="dark"] :is(.dn-settings-section-title,.dn-settings-row-copy small,
+  .dn-settings-row-copy span,.dn-settings-chevron,.dn-settings-intro,.dn-settings-status,
+  .dn-stt-status,.dn-phrase-action-icon) { color: var(--muted); }
+:root[data-theme="dark"] .dn-settings-row + .dn-settings-row,
+:root[data-theme="dark"] .dn-settings-row + .dn-settings-static-row { border-color: var(--line); }
+:root[data-theme="dark"] .copiloto-theme-option input:checked + span {
+  background: var(--ink); border-color: var(--ink); color: var(--bg);
+}
+:root[data-theme="dark"] :is(.dn-settings-row-danger strong,.dn-settings-reset,.dn-phrase-delete) {
+  color: #EA292C;
+}
+:root[data-theme="dark"] :is(.dn-memory-page,.dn-memory-summary,.dn-memory-toolbar,
+  .dn-memory-card,.dn-memory-detail,.dn-memory-empty,.dn-memory-loading,.dn-memory-categories,
+  .dn-memory-evidence,.dn-reanalysis-card,.dn-memory-learning-card,.dn-memory-quality,
+  .dn-memory-advanced-filters,.dn-memory-maintenance,.dn-base-context) {
+  color: var(--ink); background-color: var(--glass); border-color: var(--line);
+}
+:root[data-theme="dark"] :is(.dn-memory-summary-grid span,.dn-memory-meta span,
+  .dn-memory-actions button,.dn-memory-actions label,.dn-memory-filter-row select,
+  .dn-memory-search,.dn-memory-more,.dn-memory-quality,.dn-memory-card-actions button,
+  .dn-memory-detail-section,.dn-memory-evidence,.dn-base-context article,
+  .dn-memory-advanced-filters,.dn-memory-advanced-filters input,.dn-memory-advanced-filters select,
+  .dn-used-context,.dn-used-context button,.dn-reanalysis-options label,.dn-reanalysis-preview) {
+  background: var(--glass-strong); border-color: var(--line);
+}
+:root[data-theme="dark"] .app-shell :is(
+  .dn-copilot-heading h2,.dn-next-copy > strong,.dn-session-home > strong,
+  .dn-memory-summary b,.dn-memory-card h3,.dn-memory-empty strong,.dn-memory-detail-heading h2,
+  .dn-memory-detail-section h3,.dn-memory-evidence p,.dn-base-context article strong,
+  .dn-memory-history li b,.dn-memory-quality summary,.dn-base-context summary,
+  .dn-settings-card strong,.dn-result-main > strong,.dn-result-session b
+) { color: var(--ink); }
+:root[data-theme="dark"] .app-shell :is(
+  .dn-copilot-heading-copy span,.dn-kicker,.dn-next-copy > span,.dn-next-copy > small,
+  .dn-session-label,.dn-session-home > p,.dn-memory-card p,.dn-memory-meta span,
+  .dn-memory-summary-main span,.dn-memory-summary > small,.dn-memory-card-top,
+  .dn-memory-quality span,.dn-memory-advanced-filters label,.dn-memory-status,
+  .dn-memory-detail-section > p,.dn-memory-evidence span,.dn-memory-evidence small,
+  .dn-memory-history li,.dn-memory-history li span,.dn-base-context article p,
+  .dn-base-context article small,.dn-memory-categories,.dn-memory-muted,
+  .dn-phrase-text,.dn-sheet-heading p,.dn-result-card p,.dn-result-top
+) { color: var(--muted); }
+:root[data-theme="dark"] :is(.demo-sheet,.dn-copilot-sheet,.dn-memory-sheet,.dn-memory-detail-sheet,
+ .task-detail-icon,.task-icon-choice,.dn-next-action,.dn-session-home,.dn-result-summary,
+ .dn-result-card,.dn-result-session,.dn-voice-box,.dn-photo-picker,.dn-input-tabs,
+ .dn-input-tab.active,.dn-phrase-text,.dn-used-context,.dn-memory-suggestion) {
+  background: var(--glass-strong); color: var(--ink); border-color: var(--line);
+}
+:root[data-theme="dark"] :is(.field-input,.dn-phrase-text,.dn-memory-search input,
+  .dn-memory-advanced-filters input,.dn-memory-advanced-filters select,
+  .dn-stt-option span,input,textarea,select) {
+  color: var(--ink); background-color: var(--glass-strong); border-color: var(--line);
+}
+:root[data-theme="dark"] :is(.secondary-btn,.dn-secondary-action,.dn-next-buttons button,
+  .dn-input-tab,.dn-close-dialog,.dn-session-actions button,.dn-phrase-tool,
+  .dn-memory-card-actions button) {
+  color: var(--ink); background: var(--glass-strong);
+}
+:root[data-theme="dark"] :is(.dn-record-button,.dn-primary-action,.primary-btn,.dock-plus) { color: white; }
+:root[data-theme="dark"] :is(.dn-memory-status[data-kind="error"],.form-error) { color: #EA292C; }
+:root[data-theme="dark"] :is(.dn-settings-card,.dn-phrase-item,.dn-memory-card) {
+  box-shadow: 0 8px 24px rgba(0,0,0,.20);
+}
+/* Cores claras usadas apenas onde o fundo antigo não era neutro */
+:root[data-theme="dark"] .dn-memory-primary-action { background: #193b8e; color: white; }
+:root[data-theme="dark"] .dn-settings-save { background: #111526; color: white; }
+:root[data-theme="dark"] .dn-stt-option input:checked + span { background: #111526; color: white; }
 :where(button,a,input,select,textarea,summary):focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--color-info);
   outline-offset: 3px;
 }
 @media (prefers-reduced-motion: reduce) {
   .ambient, .plus-led { animation: none; }
 }
+
+/* Contrastes corrigidos após capturas visuais em 390 px (sem inventar cores). */
+:root[data-theme="dark"] :is(.habit-add,.habit-placeholder) {
+  color: var(--ink);
+  background: var(--glass-strong);
+  border-color: var(--line);
+  opacity: 1;
+}
+:root[data-theme="dark"] :is(.habit-add .habit-title,.habit-placeholder .habit-title,
+  .habit-add .habit-kicker,.habit-placeholder .habit-kicker) { color: var(--ink); opacity: 1; }
+:root[data-theme="dark"] :is(.habit-add .habit-hint,.habit-placeholder .habit-hint,
+  .habit-placeholder .habit-unit) { color: var(--muted); opacity: 1; }
+:root[data-theme="dark"] .habit-add-plus {
+  background: var(--glass); color: var(--ink); box-shadow: none;
+}
+:root[data-theme="dark"] :is(.dn-copilot-idle,.dn-next-action) {
+  color: var(--ink); background: var(--glass-strong);
+}
+:root[data-theme="dark"] :is(.dn-copilot-idle p,.dn-copilot-idle small,
+  .dn-next-copy p,.dn-next-type,.dn-next-topline,
+  .dn-session-home > p,.dn-session-label) {
+  color: var(--muted); opacity: 1;
+}
+:root[data-theme="dark"] :is(.dn-stt-setting #dnSttDescription,.dn-stt-status) {
+  color: var(--muted);
+}
+:root[data-theme="dark"] .dn-stt-option input:checked + span {
+  background: var(--glass); color: var(--ink); border-color: var(--muted);
+}
+:root[data-theme="dark"] :is(.dn-settings-status[data-kind="success"],
+  .dn-stt-status[data-kind="success"]) { color: var(--muted); }
+:root[data-theme="dark"] :is(.dn-settings-row-copy small,.dn-settings-row-copy span,
+  .dn-settings-intro,.dn-settings-section-title,.dn-memory-status,
+  .dn-input-status,.dn-next-copy > small) { opacity: 1; color: var(--muted); }
+:root[data-theme="dark"] .dn-copilot-idle span {
+  color: var(--muted);
+  opacity: 1;
+}
+/* Estado de foco e mensagens usam as cores aprovadas, sem novos azuis. */
+:root[data-theme="dark"] .dn-settings-reset,
+:root[data-theme="dark"] .dn-phrase-delete {
+  color: #EA292C;
+}
+
+/* Memórias: usar contraste de leitura, não azul-canônico sobre fundo escuro. */
+:root[data-theme="dark"] :is(.dn-memory-header-action,.dn-memory-summary-grid b,
+  .dn-memory-quality > div b,.dn-association-source,
+  .dn-association-actions button,.dn-association-history summary) {
+  color: var(--ink);
+}
+:root[data-theme="dark"] :is(.dn-memory-learning-icon,.dn-memory-editor-icon,
+  .dn-memory-quality summary .dn-symbol,.dn-memory-advanced-filters summary > .dn-symbol,
+  .dn-memory-maintenance summary > .dn-symbol,.dn-base-context summary > .dn-symbol) {
+  color: var(--muted);
+}
+:root[data-theme="dark"] .dn-memory-header-action {
+  background: var(--glass-strong);
+  border: 1px solid var(--line);
+}
+/* Formulários: rótulos e placeholders também devem permanecer legíveis. */
+:root[data-theme="dark"] :is(.field-label,.sheet-copy,.dn-file-info,.dn-photo-picker span,
+  .dn-voice-box p,.dn-input-status,.dn-settings-intro) { color: var(--muted); }
+:root[data-theme="dark"] :is(input,textarea,select)::placeholder { color: var(--muted); opacity: 1; }
