@@ -233,7 +233,7 @@
 
 html.dn-settings-open:not(.dn-settings-subpage)
 .bottom-dock {
-  display: flex !important;
+  display: grid !important;
   z-index: 1000 !important;
 }
 
